@@ -1,42 +1,43 @@
 import logger from '../utils/logger.js';
 
-const GOOGLE_PLACES_API = 'https://maps.googleapis.com/maps/api/place';
 const GOOGLE_MY_BUSINESS_API = 'https://mybusiness.googleapis.com/v4';
 
-// Fetch reviews using Google Places API (public — no auth needed)
 const fetchPlaceReviews = async (placeId) => {
   try {
-    const url = `${GOOGLE_PLACES_API}/details/json?place_id=${placeId}&fields=name,rating,reviews,user_ratings_total&key=${process.env.GOOGLE_API_KEY}`;
+    console.log('Fetching reviews for place:', placeId);
+
+    const url = `https://serpapi.com/search.json?engine=google_maps_reviews&place_id=${placeId}&api_key=${process.env.SERPAPI_KEY}`;
 
     const response = await fetch(url);
     const data = await response.json();
 
-    if (data.status !== 'OK') {
-      throw new Error(`Google Places API error: ${data.status}`);
+    console.log('SerpApi response status:', response.status);
+
+    if (!response.ok || data.error) {
+      throw new Error(`SerpApi error: ${data.error || 'Unknown error'}`);
     }
 
-    const place = data.result;
+    const reviews = (data.reviews || []).map((r) => ({
+      googleReviewId: `${placeId}_${r.iso_date}`,
+      reviewerName: r.user?.name || 'Anonymous',
+      reviewerPhoto: r.user?.thumbnail || null,
+      rating: r.rating,
+      comment: r.snippet || '',
+      reviewDate: new Date(r.iso_date),
+    }));
 
     return {
-      name: place.name,
-      overallRating: place.rating,
-      totalReviews: place.user_ratings_total,
-      reviews: (place.reviews || []).map((r) => ({
-        googleReviewId: `${placeId}_${r.time}`,
-        reviewerName: r.author_name,
-        reviewerPhoto: r.profile_photo_url || null,
-        rating: r.rating,
-        comment: r.text || '',
-        reviewDate: new Date(r.time * 1000),
-      })),
+      name: data.place_info?.title || 'Unknown',
+      overallRating: data.place_info?.rating || 0,
+      totalReviews: data.place_info?.reviews || 0,
+      reviews,
     };
   } catch (error) {
-    logger.error('Google Places API fetch error:', error.message);
+    logger.error('SerpApi fetch error:', error.message);
     throw error;
   }
 };
 
-// Post reply to Google review using Google My Business API (requires OAuth)
 const postReplyToGoogle = async (business, reviewId, replyText) => {
   try {
     if (!business.googleAccessToken || !business.googleLocationId) {

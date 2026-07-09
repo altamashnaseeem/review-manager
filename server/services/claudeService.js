@@ -20,19 +20,31 @@ Reply only with the response text, nothing else.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 300,
       }),
     });
 
     const data = await response.json();
+
+    // Catch API errors returned by Groq before reading choices
+    if (!response.ok || data.error) {
+      logger.error(`Groq API returned an error: ${JSON.stringify(data.error || data)}`);
+      throw new Error(data.error?.message || 'Unknown Groq API error');
+    }
+
+    if (!data.choices || data.choices.length === 0) {
+      logger.error(`Groq returned an unexpected response structure: ${JSON.stringify(data)}`);
+      throw new Error('No choices returned by Groq');
+    }
+
     const reply = data.choices[0].message.content.trim();
 
     logger.info(`AI reply generated for review from ${review.reviewerName}`);
     return reply;
   } catch (error) {
-    logger.error('Groq API error:', error.message);
+    logger.error('Groq service operational error:', error.message);
     throw new Error('Failed to generate AI reply');
   }
 };
