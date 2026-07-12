@@ -5,6 +5,12 @@ const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TO
 
 const sendWhatsAppAlert = async ({ to, businessName, reviewerName, rating, comment, replyLink }) => {
   try {
+    // Auto fix phone number — add +91 if missing
+    let phone = to.toString().trim();
+    if (!phone.startsWith('+')) {
+      phone = '+91' + phone;
+    }
+
     const stars = '⭐'.repeat(rating);
     const message = `⚠️ *New ${rating}-Star Review Alert!*
 
@@ -21,15 +27,15 @@ ${replyLink}`;
 
     await client.messages.create({
       from: process.env.TWILIO_WHATSAPP_NUMBER,
-      to: `whatsapp:${to}`,
+      to: `whatsapp:${phone}`,
       body: message,
     });
 
-    logger.info(`WhatsApp alert sent to ${to} for ${businessName}`);
+    logger.info(`WhatsApp alert sent to ${phone} for ${businessName}`);
     return true;
   } catch (error) {
     logger.error('Twilio WhatsApp error:', error.message);
-    throw error;
+    return false; // don't crash the poller if alert fails
   }
 };
 
