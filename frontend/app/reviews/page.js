@@ -11,7 +11,7 @@ import { useReview } from '../../context/ReviewContext';
 
 const FILTERS = [
   { label: 'All Reviews', value: '' },
-  { label: 'Pending Reply', value: 'pending' },
+  { label: 'Pending Reply (≤3★)', value: 'pending' },
   { label: 'Posted', value: 'posted' },
   { label: 'Dismissed', value: 'dismissed' },
 ];
@@ -32,14 +32,33 @@ export default function ReviewsPage() {
   const [ratingFilter, setRatingFilter] = useState('');
   const [showAddBusiness, setShowAddBusiness] = useState(false);
 
+  // This runs whenever business or filters change
   useEffect(() => {
     if (selectedBusiness?._id) {
-      const filters = {};
-      if (statusFilter) filters.status = statusFilter;
-      if (ratingFilter) filters.rating = ratingFilter;
-      fetchReviews(selectedBusiness._id, filters);
+      loadReviews();
     }
   }, [selectedBusiness, statusFilter, ratingFilter]);
+
+  const loadReviews = () => {
+    if (!selectedBusiness?._id) return;
+    
+    const filters = {};
+    if (statusFilter) filters.status = statusFilter;
+    if (ratingFilter) filters.rating = ratingFilter;
+
+    console.log('Fetching with filters:', filters); // debug
+    fetchReviews(selectedBusiness._id, filters);
+  };
+
+  const handleStatusFilter = (value) => {
+    setRatingFilter(''); // reset rating when changing status
+    setStatusFilter(value);
+  };
+
+  const handleRatingFilter = (e) => {
+    setStatusFilter(''); // reset status when filtering by rating
+    setRatingFilter(e.target.value);
+  };
 
   return (
     <AppLayout>
@@ -49,7 +68,9 @@ export default function ReviewsPage() {
           <div>
             <h1 className="text-xl font-bold text-gray-900">Reviews</h1>
             <p className="text-gray-500 text-sm mt-0.5">
-              {selectedBusiness ? `${total} total reviews for ${selectedBusiness.name}` : 'Select a business first'}
+              {selectedBusiness
+                ? `${total} reviews for ${selectedBusiness.name}`
+                : 'Select a business first'}
             </p>
           </div>
         </div>
@@ -70,44 +91,79 @@ export default function ReviewsPage() {
           </div>
         )}
 
-        {/* Filters */}
         {selectedBusiness && (
           <>
+            {/* Filters */}
             <div className="flex flex-wrap gap-3 mb-5">
-              {/* Status filter */}
+              {/* Status filter buttons */}
               <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
                 {FILTERS.map((f) => (
                   <button
                     key={f.value}
-                    onClick={() => setStatusFilter(f.value)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${statusFilter === f.value ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                    onClick={() => handleStatusFilter(f.value)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      statusFilter === f.value
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
                   >
                     {f.label}
                   </button>
                 ))}
               </div>
 
-              {/* Rating filter */}
+              {/* Rating dropdown */}
               <select
                 value={ratingFilter}
-                onChange={(e) => setRatingFilter(e.target.value)}
+                onChange={handleRatingFilter}
                 className="input-field w-auto text-sm"
               >
                 {RATINGS.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Active filter indicator */}
+            {(statusFilter || ratingFilter) && (
+              <div className="mb-4 flex items-center gap-2">
+                <span className="text-xs text-gray-500">Active filter:</span>
+                {statusFilter && (
+                  <span className="badge-blue text-xs">
+                    {FILTERS.find(f => f.value === statusFilter)?.label}
+                  </span>
+                )}
+                {ratingFilter && (
+                  <span className="badge-blue text-xs">
+                    {ratingFilter} Star
+                  </span>
+                )}
+                <button
+                  onClick={() => { setStatusFilter(''); setRatingFilter(''); }}
+                  className="text-xs text-red-500 hover:underline ml-1"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+
             {/* Reviews list */}
             {loading ? (
-              <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+              <div className="flex justify-center py-16">
+                <Spinner size="lg" />
+              </div>
             ) : reviews.length === 0 ? (
               <div className="card">
                 <EmptyState
                   icon={Star}
                   title="No reviews found"
-                  description="No reviews match the selected filters, or your reviews haven't been fetched yet."
+                  description={
+                    statusFilter || ratingFilter
+                      ? "No reviews match the selected filters."
+                      : "No reviews yet. Click Sync Reviews on dashboard."
+                  }
                 />
               </div>
             ) : (
@@ -121,7 +177,10 @@ export default function ReviewsPage() {
         )}
       </div>
 
-      <AddBusinessModal isOpen={showAddBusiness} onClose={() => setShowAddBusiness(false)} />
+      <AddBusinessModal
+        isOpen={showAddBusiness}
+        onClose={() => setShowAddBusiness(false)}
+      />
     </AppLayout>
   );
 }

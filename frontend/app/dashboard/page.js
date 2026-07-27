@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Star, AlertCircle, CheckCircle, MessageSquare, Plus, Building2, RefreshCw } from 'lucide-react';
+import { Star, AlertCircle, CheckCircle, MessageSquare, Plus, Building2, RefreshCw, ArrowLeft } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
 import StatCard from '../../components/dashboard/StatCard';
 import RatingChart from '../../components/dashboard/RatingChart';
@@ -10,27 +10,37 @@ import Spinner from '../../components/ui/Spinner';
 import { useBusiness } from '../../context/BusinessContext';
 import { useReview } from '../../context/ReviewContext';
 import { useAuth } from '../../context/AuthContext';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const { businesses, selectedBusiness, loading: bizLoading } = useBusiness();
   const { stats, fetchStats, loading: reviewLoading } = useReview();
   const [showAddBusiness, setShowAddBusiness] = useState(false);
-
+  
   useEffect(() => {
+    
     if (selectedBusiness?._id) {
       fetchStats(selectedBusiness._id);
     }
   }, [selectedBusiness]);
 
   const isLoading = bizLoading || reviewLoading;
-
+  
   return (
     <AppLayout>
       <div className="p-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
+            {/* Back to Landing Page Link */}
+            <Link 
+              href="/" 
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 mb-2 transition-colors"
+            >
+              <ArrowLeft size={13} /> Back 
+            </Link>
+
             <h1 className="text-xl font-bold text-gray-900">
               Good morning, {user?.name?.split(' ')[0]} 👋
             </h1>

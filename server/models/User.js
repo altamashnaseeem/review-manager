@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     },
     plan: {
       type: String,
-      enum: ['trial', 'basic', 'pro'],
+      enum: ['trial','pro'],
       default: 'trial',
     },
     trialEndsAt: {

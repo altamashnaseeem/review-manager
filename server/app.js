@@ -8,7 +8,7 @@ import authRoutes from './routes/auth.js';
 import reviewRoutes from './routes/review.js';
 import businessRoutes from './routes/business.js';
 import errorHandler from './middleware/errorHandler.js';
-
+import paymentRoutes from "./routes/paymentRoutes.js"
 dotenv.config();
 
 const app = express();
@@ -37,6 +37,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api', paymentRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

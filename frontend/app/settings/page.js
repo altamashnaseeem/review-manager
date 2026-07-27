@@ -25,7 +25,22 @@ export default function SettingsPage() {
     { id: 'business', label: 'Business Settings', icon: Bell },
     { id: 'security', label: 'Security', icon: Lock },
   ];
+// Add this state at top of component
+const [connecting, setConnecting] = useState(false);
 
+// Add this function
+const handleConnectGoogle = async () => {
+  if (!selectedBusiness) return;
+  setConnecting(true);
+  try {
+    const { data } = await api.get(`/business/${selectedBusiness._id}/google/connect`);
+    // Redirect owner to Google login
+    window.location.href = data.url;
+  } catch (error) {
+    toast.error('Failed to connect Google Business');
+    setConnecting(false);
+  }
+};
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -165,6 +180,30 @@ export default function SettingsPage() {
                     <Trash2 size={14} /> Remove Business
                   </button>
                 </div>
+                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-gray-900">Google Business Account</p>
+      <p className="text-xs text-gray-500 mt-0.5">
+        {selectedBusiness?.googleAccessToken 
+          ? '✅ Connected — can post replies directly to Google' 
+          : '❌ Not connected — connect to enable posting replies'}
+      </p>
+    </div>
+    <button
+      type="button"
+      onClick={handleConnectGoogle}
+      disabled={connecting}
+      className={`btn-primary text-sm ${selectedBusiness?.googleAccessToken ? 'bg-green-600 hover:bg-green-700' : ''}`}
+    >
+      {connecting 
+        ? 'Redirecting...' 
+        : selectedBusiness?.googleAccessToken 
+          ? 'Reconnect Google' 
+          : 'Connect Google Business'}
+    </button>
+  </div>
+</div>
               </form>
             )}
           </div>

@@ -15,10 +15,25 @@ const getReviews = async (req, res, next) => {
     }
 
     const { rating, status, page = 1, limit = 20 } = req.query;
-    const filter = { business: req.params.businessId };
+    const filter = { 
+  business: req.params.businessId
+};
 
-    if (rating) filter.rating = Number(rating);
-    if (status) filter.replyStatus = status;
+// Rating filter
+if (rating) {
+  filter.rating = Number(rating); // convert string to number
+}
+
+// Status filter
+if (status === 'pending') {
+  filter.replyStatus = 'pending';
+  // Only add rating filter for pending if no specific rating selected
+  if (!rating) {
+    filter.rating = { $lte: business.alertOnRating };
+  }
+} else if (status) {
+  filter.replyStatus = status;
+}
 
     const skip = (page - 1) * limit;
     const reviews = await Review.find(filter)

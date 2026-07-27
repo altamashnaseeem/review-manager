@@ -8,7 +8,7 @@ import { ReviewProvider } from '../context/ReviewContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'ReviewManager — Protect Your Business Reputation',
+  title: 'RepliQ — Protect Your Business Reputation',
   description: 'Monitor Google reviews, get instant alerts, and reply with AI-generated responses.',
 };
 

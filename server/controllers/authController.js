@@ -1,7 +1,6 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import logger from '../utils/logger.js';
-
 // @desc    Register new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -129,3 +128,4 @@ const updatePassword = async (req, res, next) => {
 };
 
 export { register, login, getMe, updatePassword };
+

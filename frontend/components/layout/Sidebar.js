@@ -26,7 +26,7 @@ export default function Sidebar() {
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <Star size={16} className="text-white fill-white" />
           </div>
-          <span className="font-bold text-gray-900">ReviewManager</span>
+          <span className="font-bold text-gray-900">RepliQ</span>
         </div>
       </div>
 

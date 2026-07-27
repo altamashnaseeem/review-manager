@@ -48,7 +48,7 @@ const fetchPlaceReviews = async (placeId) => {
     let nextPageToken = null;
     let placeInfo = null;
     let pageCount = 0;
-    const MAX_PAGES = 3; // fetch max 3 pages = ~24 reviews
+    const MAX_PAGES = 4; // fetch max 3 pages = ~24 reviews
 
     do {
       const url = nextPageToken
@@ -130,3 +130,4 @@ const postReplyToGoogle = async (business, reviewId, replyText) => {
 };
 
 export { fetchPlaceReviews, postReplyToGoogle };
+
