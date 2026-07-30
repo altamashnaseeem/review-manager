@@ -26,7 +26,7 @@ export default function Home() {
       transition: { staggerChildren: 0.2 }
     }
   };
-console.log("user",user)
+
   // --- RAZORPAY INTEGRATION HANDLER ---
   const handleCheckout = async (planKey) => {
     console.log("")
@@ -36,16 +36,16 @@ console.log("user",user)
       router.push('/register');
       return;
     }
-    console.log("mid")
+  
     try {
       setPaymentLoading(planKey);
-       console.log("paymentloading",paymentLoading)
+      
       // 2. Fetch the session authorization parameters from the Node.js backend
-      console.log('start')
+    
       const res = await fetch('http://localhost:5000/api/checkout/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planKey, userId: user._id }),
+        body: JSON.stringify({ plan: planKey, userId: user.id }),
       });
 
       const data = await res.json();
