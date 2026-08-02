@@ -28,9 +28,11 @@ const userSchema = new mongoose.Schema(
     },
     plan: {
       type: String,
-      enum: ['trial','pro'],
+      // Updated to match all the subscription tiers passing from your frontend/Razorpay workflow
+      enum: ['trial','none', 'monthly', 'quarterly', 'semi-annual'],
       default: 'trial',
     },
+    
     trialEndsAt: {
       type: Date,
       default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days

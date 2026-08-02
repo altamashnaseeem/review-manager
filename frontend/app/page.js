@@ -1,19 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext'; 
 import { motion } from 'framer-motion';
-import { Star, Shield, Zap, Check, ArrowRight, MessageSquare, AlertTriangle, BarChart3, Menu, X, Loader2 } from 'lucide-react';
+import { Star, Zap, Check, ArrowRight, MessageSquare, AlertTriangle, BarChart3, Menu, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const { isAuthenticated, loading, user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [paymentLoading, setPaymentLoading] = useState(null); // Tracks layout loading spinner per key
+  const [paymentLoading, setPaymentLoading] = useState(null); 
+  const [showExpiryModal, setShowExpiryModal] = useState(false); // Controlled structural overlay state
+  const [selectedModalPlan, setSelectedModalPlan] = useState('monthly'); // Track chosen option inside modal
   const router = useRouter();
   
-  // Animation configuration
+  // Track system temporal limits across authenticated account updates
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      const now = new Date();
+      const trialExpired = user.trialEndsAt && new Date(user.trialEndsAt) < now;
+      
+      // Trigger modal overlay if user has no premium active tier and trial window is past
+      if (user.plan === 'none' && trialExpired) {
+        setShowExpiryModal(true);
+      }
+      console.log("user", user)
+      console.log("showexpirymodal", showExpiryModal)
+    }
+  }, [user, loading, isAuthenticated]);
+
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -27,12 +43,8 @@ export default function Home() {
     }
   };
 
-  // --- RAZORPAY INTEGRATION HANDLER ---
   const handleCheckout = async (planKey) => {
-    console.log("")
-    // 1. Guard check: User must be logged in to initialize a subscription checkout
     if (!isAuthenticated || !user?.id) {
-      
       router.push('/register');
       return;
     }
@@ -40,21 +52,17 @@ export default function Home() {
     try {
       setPaymentLoading(planKey);
       
-      // 2. Fetch the session authorization parameters from the Node.js backend
-    
       const res = await fetch('http://localhost:5000/api/checkout/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planKey, userId: user.id }),
       });
-
+       
       const data = await res.json();
-      console.log("end")
       if (!res.ok) {
         throw new Error(data.error || 'Failed to initialize session');
       }
 
-      // 3. Inject Razorpay's checkout script dynamically if not loaded yet
       if (!window.Razorpay) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
@@ -65,19 +73,19 @@ export default function Home() {
         });
       }
 
-      // 4. Set configuration properties captured from your backend payload
       const options = {
         key: data.razorpayKeyId,
         subscription_id: data.subscriptionId,
         name: 'RepliQ',
         description: `${planKey.toUpperCase()} Subscription Plan`,
         handler: function (response) {
-          console.log('Payment Successful:', response);
+          console.log('Payment Verification Success Data:', response);
+          setShowExpiryModal(false); // Clear structural overlay state block
           router.push('/dashboard?payment=success');
         },
         prefill: {
-          name: data.name || '',
-          email: data.email || '',
+          name: user.name || data.name || '',
+          email: user.email || data.email || '',
           contact: data.phone || '',
         },
         theme: {
@@ -92,13 +100,10 @@ export default function Home() {
       console.error('Checkout error:', err);
       alert(err.message || 'An error occurred during payment setup.');
     } finally {
-      
       setPaymentLoading(null);
-
     }
   };
 
-  // Only show full-screen loader on initial boot when status is totally unknown
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -336,16 +341,16 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-slate-900">Monthly</h3>
                 <p className="text-slate-400 text-sm mt-1">Flexible month-to-month access</p>
                 <div className="mt-6 flex items-baseline text-slate-900">
-                  <span className="text-4xl font-extrabold tracking-tight">$12</span>
+                  <span className="text-4xl font-extrabold tracking-tight">Rs. 999</span>
                   <span className="ml-1 text-xl font-semibold text-slate-500">/mo</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">Billed monthly at $12</p>
+                <p className="text-xs text-slate-400 mt-2">Billed monthly at Rs.999</p>
                 
                 <ul className="mt-8 space-y-4 text-sm text-slate-600">
-                  <li className="flex items-center gap-3">✓ 7-Day Free Trial</li>
-                  <li className="flex items-center gap-3">✓ Unlimited Review Monitoring</li>
-                  <li className="flex items-center gap-3">✓ Instant Text & WhatsApp Alerts</li>
-                  <li className="flex items-center gap-3">✓ AI Reply Generation</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> 7-Day Free Trial</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Unlimited Review Monitoring</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Instant Text & WhatsApp Alerts</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> AI Reply Generation</li>
                 </ul>
               </div>
               <button 
@@ -366,16 +371,16 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-slate-900">3 Months</h3>
                 <p className="text-slate-400 text-sm mt-1">Perfect stability for growing brands</p>
                 <div className="mt-6 flex items-baseline text-slate-900">
-                  <span className="text-4xl font-extrabold tracking-tight">$10</span>
+                  <span className="text-4xl font-extrabold tracking-tight">Rs. 899</span>
                   <span className="ml-1 text-xl font-semibold text-slate-500">/mo</span>
                 </div>
-                <p className="text-xs text-blue-600 font-medium mt-2">Billed $30 every 3 months</p>
+                <p className="text-xs text-blue-600 font-medium mt-2">Billed Rs.2697 every 3 months</p>
                 
                 <ul className="mt-8 space-y-4 text-sm text-slate-600">
-                  <li className="flex items-center gap-3">✓ 7-Day Free Trial</li>
-                  <li className="flex items-center gap-3">✓ Unlimited Review Monitoring</li>
-                  <li className="flex items-center gap-3">✓ Instant Text & WhatsApp Alerts</li>
-                  <li className="flex items-center gap-3">✓ Priority AI Features</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> 7-Day Free Trial</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Unlimited Review Monitoring</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Instant Text & WhatsApp Alerts</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Priority AI Features</li>
                 </ul>
               </div>
               <button 
@@ -393,16 +398,16 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-slate-900">6 Months</h3>
                 <p className="text-slate-400 text-sm mt-1">Best value infrastructure scaling</p>
                 <div className="mt-6 flex items-baseline text-slate-900">
-                  <span className="text-4xl font-extrabold tracking-tight">$8</span>
+                  <span className="text-4xl font-extrabold tracking-tight">Rs. 799</span>
                   <span className="ml-1 text-xl font-semibold text-slate-500">/mo</span>
                 </div>
-                <p className="text-xs text-green-600 font-medium mt-2">Billed $48 every 6 months</p>
+                <p className="text-xs text-green-600 font-medium mt-2">Billed Rs.4794 every 6 months</p>
                 
                 <ul className="mt-8 space-y-4 text-sm text-slate-600">
-                  <li className="flex items-center gap-3">✓ 7-Day Free Trial</li>
-                  <li className="flex items-center gap-3">✓ Unlimited Review Monitoring</li>
-                  <li className="flex items-center gap-3">✓ Instant Text & WhatsApp Alerts</li>
-                  <li className="flex items-center gap-3">✓ Max Dedicated API Speed</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> 7-Day Free Trial</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> Unlimited Review Monitoring</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> Instant Text & WhatsApp Alerts</li>
+                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> Max Dedicated API Speed</li>
                 </ul>
               </div>
               <button 
@@ -445,6 +450,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      
+
     </div>
   );
 }

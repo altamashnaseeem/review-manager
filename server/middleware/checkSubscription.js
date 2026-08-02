@@ -1,27 +1,24 @@
-// middleware/subscriptionCheck.js
 export const checkSubscription = async (req, res, next) => {
-  const user = req.user; // Assuming your auth middleware populates req.user
-
-  // If the user upgraded to pro, let them pass
-  if (user.plan === 'pro') {
-    return next();
-  }
-
-  // If they are still on a trial, verify the timestamp
-  if (user.plan === 'trial') {
-    const now = new Date();
-    const trialEnd = new Date(user.trialEndsAt);
-
-    if (now > trialEnd) {
-      return res.status(402).json({
-        success: false,
-        message: "Your 7-day trial has expired. Please upgrade to the pro plan to continue using the application."
-      });
+  try {
+    const user = req.user; // Assumes user state payload is attached from your JWT auth middleware
+     
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized.' });
     }
 
-    return next(); // Trial is still active
+    const now = new Date();
+    const isTrialExpired = user.trialEndsAt && new Date(user.trialEndsAt) < now;
+   
+    // Check fallback parameters: If account tier plan is none, and evaluation trial expired
+    if (user.plan === 'none' && isTrialExpired) {
+      return res.status(403).json({ 
+        error: 'Subscription expired.', 
+        code: 'SUBSCRIPTION_EXPIRED' 
+      });
+    }
+    
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Internal subscription evaluation error.' });
   }
-
-  return res.status(403).json({ success: false, message: "Account context invalid." });
 };
-

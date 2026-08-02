@@ -5,10 +5,9 @@ import User from '../models/User.js';
 const router = express.Router();
 
 // POST /api/checkout/session
-router.post('/session', async (req, res) => {
+router.post('/checkout/session', async (req, res) => {
   try {
     const { plan, userId } = req.body;
-
     const PLAN_IDS = {
       monthly: process.env.RAZORPAY_PLAN_MONTHLY_ID,
       quarterly: process.env.RAZORPAY_PLAN_QUARTERLY_ID,
@@ -23,7 +22,7 @@ router.post('/session', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
-
+    
     const now = new Date();
     let startAtTimestamp = undefined;
 
@@ -53,14 +52,14 @@ router.post('/session', async (req, res) => {
     if (startAtTimestamp) {
       subscriptionOptions.start_at = startAtTimestamp;
     }
-
+     
     const subscription = await razorpay.subscriptions.create(subscriptionOptions);
-
-    // Update user record: Save subscription tracking info & upgrade the plan type
+   
+    // Note: Do not update user.plan here directly to avoid exploit bypasses on window closure.
+    // Instead, store the pending subscription tracking info.
     user.subscriptionId = subscription.id;
-    user.plan = plan; // Changes from 'trial' to 'monthly', 'quarterly', etc.
     await user.save();
-
+    
     return res.status(200).json({
       subscriptionId: subscription.id,
       razorpayKeyId: process.env.RAZORPAY_KEY_ID,
@@ -76,3 +75,4 @@ router.post('/session', async (req, res) => {
 });
 
 export default router;
+

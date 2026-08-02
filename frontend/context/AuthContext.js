@@ -32,15 +32,40 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // On app load — check if token exists in localStorage
+  // On app load — Validate token and pull fresh server status
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user: JSON.parse(user) } });
-    } else {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
+    const syncUserSession = async () => {
+      const token = localStorage.getItem('token');
+      const cachedUser = localStorage.getItem('user');
+      
+      if (!token) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
+
+      try {
+        // Pre-populate with cache so the UI doesn't visually flicker if everything matches
+        if (cachedUser) {
+          dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user: JSON.parse(cachedUser) } });
+        }
+
+        // --- FETCH FRESH PROFILE SOURCE OF TRUTH FROM SERVER ---
+        // Assumes your backend setup checks the authorization bearer header automatically
+        const { data } = await api.get('/auth/me'); 
+        
+        // Overwrite standard cache storage with correct live records
+        localStorage.setItem('user', JSON.stringify(data.user));
+        dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user: data.user } });
+      } catch (error) {
+        console.error("Session synchronization failed:", error);
+        // If token expires or server errors completely, scrub the workspace credentials clean
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        dispatch({ type: 'LOGOUT' });
+      }
+    };
+
+    syncUserSession();
   }, []);
 
   const login = async (email, password) => {
@@ -103,4 +128,4 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used inside AuthProvider');
   return context;
-};
+};  
