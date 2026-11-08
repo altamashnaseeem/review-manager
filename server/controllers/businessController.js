@@ -25,7 +25,7 @@ const addBusiness = async (req, res, next) => {
       googlePlaceId: googlePlaceId || `pending-${randomUUID()}`,
       alertPhone,
       alertEmail: alertEmail || null,
-      alertOnRating: alertOnRating || 3,
+      alertOnRating: alertOnRating ?? 3,
     });
 
     logger.info(`Business added: ${name} by user ${req.user.id}`);

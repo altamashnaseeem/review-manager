@@ -93,6 +93,38 @@ test('review alerts and approval workflow', async t => {
     assert.equal((await Review.findById(low._id)).alertAttemptCount, 1);
     googleMock.mock.restore();
   });
+  await t.test('all 25 owner-threshold/customer-rating combinations use the saved business setting', async () => {
+    const expected = { 1: [1], 2: [1, 2], 3: [1, 2, 3], 4: [1, 2, 3, 4], 5: [1, 2, 3, 4, 5] };
+    for (const threshold of [1, 2, 3, 4, 5]) {
+      const original = await createBusiness({ alertOnRating: 3 });
+      const update = await call(`/business/${original._id}`, { method: 'PUT', body: { alertOnRating: threshold } });
+      assert.equal(update.status, 200);
+      assert.equal(update.data.business.alertOnRating, threshold);
+      const business = await Business.findById(original._id);
+      const googleMock = mock.method(google.auth.OAuth2.prototype, 'request', async () => ({ data: {
+        reviews: ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'].map((starRating, index) => ({
+          reviewId: `matrix-${business._id}-${index + 1}`, starRating, comment: 'Threshold matrix review',
+          createTime: '2026-01-01T00:00:00Z', updateTime: '2026-01-01T00:00:00Z',
+        })), averageRating: 3, totalReviewCount: 5,
+      } }));
+      await syncBusinessReviews(business, { notify: false });
+      googleMock.mock.restore();
+      const eligible = await Review.find({ business: business._id, alertEligible: true }).sort({ rating: 1 });
+      assert.deepEqual(eligible.map(review => review.rating), expected[threshold]);
+      const notified = [];
+      await processReviewAlerts(business, {
+        generateReply: async () => 'Draft awaiting owner approval',
+        sendAlert: async details => { notified.push(details.rating); return { sid: `SMmatrix${threshold}${details.rating}`, status: 'queued' }; },
+      });
+      assert.deepEqual(notified.sort(), expected[threshold]);
+      const pending = await call(`/reviews/${business._id}?status=pending`);
+      assert.equal(pending.status, 200);
+      assert.deepEqual(pending.data.reviews.map(review => review.rating).sort(), expected[threshold]);
+      assert.equal((await call(`/reviews/${business._id}/stats`)).data.stats.pendingReplies, threshold);
+    }
+    const invalid = await call('/business', { method: 'POST', body: { name: 'Invalid threshold', alertPhone: '+15555555556', alertOnRating: 0 } });
+    assert.equal(invalid.status, 400);
+  });
   await t.test('failed alerts retry without requiring another review and preserve the AI draft', async () => {
     const business = await createBusiness(); const review = await createReview(business);
     let drafts = 0, sends = 0;

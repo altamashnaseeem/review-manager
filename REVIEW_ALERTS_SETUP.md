@@ -1,8 +1,18 @@
 # Rating alerts and owner-approved AI replies
 
-For a business with threshold **3**, newly imported 1-, 2-, and 3-star reviews
-queue an alert. A 4- or 5-star review does not. Any integer threshold from 1 to 5
-is supported, including the editor and the Needs reply filter.
+Each owner selects an alert threshold for each business. Any whole number from
+**1 through 5** is supported. New reviews at or below that selected number trigger
+an alert; there is no fixed 3-star rule. The same selected value controls alerts,
+the reply editor, and the Needs reply filter. The initial form default is 3 until
+the owner selects another value.
+
+| Owner selects | Customer ratings that trigger an alert |
+|---|---|
+| 1 | 1 |
+| 2 | 1, 2 |
+| 3 | 1, 2, 3 |
+| 4 | 1, 2, 3, 4 |
+| 5 | 1, 2, 3, 4, 5 |
 
 The workflow is:
 

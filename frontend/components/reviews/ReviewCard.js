@@ -27,7 +27,7 @@ export default function ReviewCard({ review }) {
     finally { setRetryingAlert(false); }
   };
   const isDemo = review.source === 'demo';
-  const isBad = review.rating <= (selectedBusiness?.alertOnRating ?? 3);
+  const qualifiesForAlert = Number.isInteger(selectedBusiness?.alertOnRating) && review.rating <= selectedBusiness.alertOnRating;
   const statusColors = {
     pending:   'badge-yellow',
     approved:  'badge-blue',
@@ -53,7 +53,7 @@ export default function ReviewCard({ review }) {
   };
 
   return (
-    <div className={`card p-5 transition-all ${isBad && review.replyStatus === 'pending' ? 'border-red-100 bg-red-50/30' : ''}`}>
+    <div className={`card p-5 transition-all ${qualifiesForAlert && review.replyStatus === 'pending' ? 'border-red-100 bg-red-50/30' : ''}`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-start gap-3">
@@ -90,7 +90,7 @@ export default function ReviewCard({ review }) {
       {review.replyError && <p role="alert" className="text-xs text-red-700 mb-3">{review.replyError}</p>}
       {review.replyStatus === 'posting' && <p className="text-sm text-blue-700">Posting your approved reply. Refresh to check the result.</p>}
       {/* AI drafts are posted only after the owner approves the text. */}
-      {(isBad || review.replyStatus === 'approved') && ['pending', 'approved'].includes(review.replyStatus) && (
+      {(qualifiesForAlert || review.replyStatus === 'approved') && ['pending', 'approved'].includes(review.replyStatus) && (
         <div className="border-t border-gray-100 pt-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🤖 AI suggested reply</span>

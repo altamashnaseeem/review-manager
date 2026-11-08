@@ -15,7 +15,7 @@ export default function SettingsPage() {
   const [bizForm, setBizForm] = useState({
     alertPhone: selectedBusiness?.alertPhone || '',
     alertEmail: selectedBusiness?.alertEmail || '',
-    alertOnRating: selectedBusiness?.alertOnRating || 3,
+    alertOnRating: selectedBusiness?.alertOnRating ?? 3,
   });
   useEffect(() => {
     setBizForm({ alertPhone: selectedBusiness?.alertPhone || '', alertEmail: selectedBusiness?.alertEmail || '', alertOnRating: selectedBusiness?.alertOnRating ?? 3 });
