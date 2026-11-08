@@ -1,8 +1,14 @@
 import Review from '../models/Review.js';
 import Business from '../models/Business.js';
 import { generateReviewReply } from '../services/claudeService.js';
-import { postReplyToGoogle } from '../services/googleServices.js';
+import { postReplyToGoogle, demoEnabled } from '../services/googleServices.js';
 import logger from '../utils/logger.js';
+
+const requireConnection = (business, res) => {
+  if (business.googleConnected && business.reviewsSynced && (!business.isDemo || demoEnabled())) return true;
+  res.status(409).json({ success: false, code: 'GOOGLE_CONNECTION_REQUIRED', message: 'Connect Google Business, select a location, and sync reviews first.' });
+  return false;
+};
 
 // @desc    Get all reviews for a business
 // @route   GET /api/reviews/:businessId
@@ -14,7 +20,14 @@ const getReviews = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Business not found' });
     }
 
-    const { rating, status, page = 1, limit = 20 } = req.query;
+    if (!requireConnection(business, res)) return;
+
+    const { rating, status } = req.query;
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 20);
+    if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      return res.status(400).json({ success: false, message: 'Page must be positive and limit must be between 1 and 100.' });
+    }
     const filter = { 
   business: req.params.businessId
 };
@@ -65,6 +78,8 @@ const getStats = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Business not found' });
     }
 
+    if (!requireConnection(business, res)) return;
+
     const totalReviews = await Review.countDocuments({ business: req.params.businessId });
     const pendingReplies = await Review.countDocuments({ business: req.params.businessId, replyStatus: 'pending', rating: { $lte: business.alertOnRating } });
     const postedReplies = await Review.countDocuments({ business: req.params.businessId, replyStatus: 'posted' });
@@ -114,7 +129,8 @@ const regenerateReply = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
-    const aiReply = await generateReviewReply(review, review.business.name);
+    if (!requireConnection(review.business, res)) return;
+    const aiReply = review.business.isDemo ? 'Demo reply: Thank you for your feedback. This reply is for testing only.' : await generateReviewReply(review, review.business.name);
     review.aiSuggestedReply = aiReply;
     await review.save();
 
@@ -144,8 +160,8 @@ const postReply = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
-    // Post to Google
-    await postReplyToGoogle(review.business, review.googleReviewId, finalReply);
+    if (!requireConnection(review.business, res)) return;
+    const result = await postReplyToGoogle(review.business, review.googleReviewId, finalReply);
 
     review.finalReply = finalReply;
     review.replyStatus = 'posted';
@@ -155,7 +171,7 @@ const postReply = async (req, res, next) => {
 
     logger.info(`Reply posted for review ${review._id}`);
 
-    res.json({ success: true, message: 'Reply posted to Google successfully', review });
+    res.json({ success: true, message: result.simulated ? 'Demo reply saved locally; nothing was posted to Google.' : 'Reply posted to Google successfully', review });
   } catch (error) {
     next(error);
   }
@@ -175,6 +191,7 @@ const dismissReview = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
+    if (!requireConnection(review.business, res)) return;
     review.replyStatus = 'dismissed';
     review.isNew = false;
     await review.save();

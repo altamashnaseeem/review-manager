@@ -22,12 +22,27 @@ import { useBusiness } from '../../context/BusinessContext';
 import { useReview } from '../../context/ReviewContext';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import api from '../../lib/axios';
+import toast from 'react-hot-toast';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth(); // Extracted logout here
-  const { businesses, selectedBusiness, loading: bizLoading } = useBusiness();
+  const { businesses, selectedBusiness, fetchBusinesses, loading: bizLoading } = useBusiness();
   const { stats, fetchStats, loading: reviewLoading } = useReview();
   
+  const [syncing, setSyncing] = useState(false);
+  const syncReviews = async () => {
+    if (!selectedBusiness) return;
+    setSyncing(true);
+    try {
+      await api.post(`/business/${selectedBusiness._id}/google/sync`);
+      await fetchBusinesses();
+      await fetchStats(selectedBusiness._id);
+      toast.success(selectedBusiness.isDemo ? 'Demo reviews synced' : 'Google reviews synced');
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not sync reviews'); }
+    finally { setSyncing(false); }
+  };
+
   // Modal & Selection States
   const [showAddBusiness, setShowAddBusiness] = useState(false);
   const [showExpiryModal, setShowExpiryModal] = useState(false);
@@ -56,7 +71,7 @@ useEffect(() => {
 }, [user]);
 
   useEffect(() => {
-    if (selectedBusiness?._id && !showExpiryModal) {
+    if (selectedBusiness?.googleConnected && selectedBusiness?.reviewsSynced && !showExpiryModal) {
       fetchStats(selectedBusiness._id);
     }
   }, [selectedBusiness, showExpiryModal]);
@@ -130,8 +145,8 @@ useEffect(() => {
           </div>
           <div className="flex items-center gap-3">
             {selectedBusiness && (
-              <button onClick={() => fetchStats(selectedBusiness._id)} className="btn-secondary">
-                <RefreshCw size={15} /> Refresh
+              <button onClick={syncReviews} disabled={syncing} className="btn-secondary">
+                <RefreshCw size={15} className={syncing ? "animate-spin" : ""} /> {syncing ? "Syncing…" : "Sync Reviews"}
               </button>
             )}
             <button onClick={() => setShowAddBusiness(true)} className="btn-primary">

@@ -1,12 +1,14 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Building2, Loader2 } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { useBusiness } from '../../context/BusinessContext';
 
 export default function AddBusinessModal({ isOpen, onClose }) {
-  const [form, setForm] = useState({ name: '', googlePlaceId: '', alertPhone: '', alertEmail: '', alertOnRating: 3 });
+  const [form, setForm] = useState({ name: '', alertPhone: '', alertEmail: '', alertOnRating: 3 });
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const { addBusiness } = useBusiness();
 
   const handleSubmit = async (e) => {
@@ -15,7 +17,8 @@ export default function AddBusinessModal({ isOpen, onClose }) {
     const result = await addBusiness(form);
     if (result.success) {
       onClose();
-      setForm({ name: '', googlePlaceId: '', alertPhone: '', alertEmail: '', alertOnRating: 3 });
+      router.push(`/connect-google?business=${result.business._id}`);
+      setForm({ name: '', alertPhone: '', alertEmail: '', alertOnRating: 3 });
     }
     setLoading(false);
   };
@@ -30,21 +33,6 @@ export default function AddBusinessModal({ isOpen, onClose }) {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="input-field" placeholder="e.g. Sharma Restaurant"
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Google Place ID</label>
-          <input
-            type="text" required value={form.googlePlaceId}
-            onChange={(e) => setForm({ ...form, googlePlaceId: e.target.value })}
-            className="input-field" placeholder="ChIJ..."
-          />
-          <p className="text-xs text-gray-400 mt-1">
-            Find it at{' '}
-            <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
-              Google Place ID Finder
-            </a>
-          </p>
         </div>
 
         <div>
@@ -82,7 +70,7 @@ export default function AddBusinessModal({ isOpen, onClose }) {
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
           <button type="submit" disabled={loading} className="btn-primary flex-1 justify-center">
-            {loading ? <><Loader2 size={14} className="animate-spin" /> Adding...</> : <><Building2 size={14} /> Add Business</>}
+            {loading ? <><Loader2 size={14} className="animate-spin" /> Adding...</> : <><Building2 size={14} /> Continue to Google</>}
           </button>
         </div>
       </form>

@@ -4,7 +4,7 @@ import { User, Bell, Lock, Trash2, Loader2, Save } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import api from '../../lib/axios';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
@@ -29,18 +29,8 @@ export default function SettingsPage() {
 const [connecting, setConnecting] = useState(false);
 
 // Add this function
-const handleConnectGoogle = async () => {
-  if (!selectedBusiness) return;
-  setConnecting(true);
-  try {
-    const { data } = await api.get(`/business/${selectedBusiness._id}/google/connect`);
-    // Redirect owner to Google login
-    window.location.href = data.url;
-  } catch (error) {
-    toast.error('Failed to connect Google Business');
-    setConnecting(false);
-  }
-};
+const router = useRouter();
+const handleConnectGoogle = () => router.push(`/connect-google?business=${selectedBusiness._id}&reconnect=1`);
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -185,21 +175,21 @@ const handleConnectGoogle = async () => {
     <div>
       <p className="text-sm font-medium text-gray-900">Google Business Account</p>
       <p className="text-xs text-gray-500 mt-0.5">
-        {selectedBusiness?.googleAccessToken 
-          ? '✅ Connected — can post replies directly to Google' 
-          : '❌ Not connected — connect to enable posting replies'}
+        {selectedBusiness?.googleConnected
+          ? '✅ Connected — can post replies directly to Google'
+          : '❌ Not connected — connect to fetch reviews and post replies'}
       </p>
     </div>
     <button
       type="button"
       onClick={handleConnectGoogle}
       disabled={connecting}
-      className={`btn-primary text-sm ${selectedBusiness?.googleAccessToken ? 'bg-green-600 hover:bg-green-700' : ''}`}
+      className={`btn-primary text-sm ${selectedBusiness?.googleConnected ? 'bg-green-600 hover:bg-green-700' : ''}`}
     >
-      {connecting 
-        ? 'Redirecting...' 
-        : selectedBusiness?.googleAccessToken 
-          ? 'Reconnect Google' 
+      {connecting
+        ? 'Redirecting...'
+        : selectedBusiness?.googleConnected
+          ? 'Reconnect Google'
           : 'Connect Google Business'}
     </button>
   </div>

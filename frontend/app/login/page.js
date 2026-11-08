@@ -13,14 +13,14 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) router.push('/dashboard');
+    if (isAuthenticated) router.replace('/connect-google');
   }, [isAuthenticated]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     const result = await login(form.email, form.password);
-    if (result.success) router.push('/dashboard');
+    if (result.success) router.replace('/connect-google');
     setLoading(false);
   };
 

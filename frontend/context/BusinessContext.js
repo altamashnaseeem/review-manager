@@ -1,5 +1,6 @@
 'use client';
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from './AuthContext';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
 
@@ -8,14 +9,21 @@ const initialState = {
   selectedBusiness: null,
   loading: false,
   error: null,
+  loaded: false,
+  demoEnabled: false,
 };
 
 const businessReducer = (state, action) => {
   switch (action.type) {
+    case 'RESET':
+      return { ...initialState };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_BUSINESSES':
-      return { ...state, businesses: action.payload, loading: false };
+      return { ...state, businesses: action.payload.businesses, loading: false, loaded: true, error: null,
+        demoEnabled: action.payload.demoEnabled,
+        selectedBusiness: action.payload.businesses.find(b => b._id === state.selectedBusiness?._id)
+          || action.payload.businesses.find(b => b.googleConnected && b.reviewsSynced) || action.payload.businesses[0] || null };
     case 'ADD_BUSINESS':
       return { ...state, businesses: [...state.businesses, action.payload], loading: false };
     case 'UPDATE_BUSINESS':
@@ -35,7 +43,7 @@ const businessReducer = (state, action) => {
     case 'SELECT_BUSINESS':
       return { ...state, selectedBusiness: action.payload };
     case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
+      return { ...state, error: action.payload, loading: false, loaded: true };
     default:
       return state;
   }
@@ -46,19 +54,24 @@ const BusinessContext = createContext(null);
 export const BusinessProvider = ({ children }) => {
   const [state, dispatch] = useReducer(businessReducer, initialState);
 
+  const { user } = useAuth();
+  const ownerId = user?.id;
+  const activeOwner = useRef(ownerId);
+  activeOwner.current = ownerId;
   const fetchBusinesses = useCallback(async () => {
+    if (!ownerId) return;
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const { data } = await api.get('/business');
-      dispatch({ type: 'SET_BUSINESSES', payload: data.businesses });
-      // Auto select first business
-      if (data.businesses.length > 0 && !state.selectedBusiness) {
-        dispatch({ type: 'SELECT_BUSINESS', payload: data.businesses[0] });
-      }
+      if (activeOwner.current === ownerId) dispatch({ type: 'SET_BUSINESSES', payload: data });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message });
+      if (activeOwner.current === ownerId) dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Could not load your businesses. Please retry.' });
     }
-  }, []);
+  }, [ownerId]);
+  useEffect(() => {
+    dispatch({ type: 'RESET' });
+    if (ownerId) fetchBusinesses();
+  }, [ownerId, fetchBusinesses]);
 
   const addBusiness = async (businessData) => {
     dispatch({ type: 'SET_LOADING', payload: true });

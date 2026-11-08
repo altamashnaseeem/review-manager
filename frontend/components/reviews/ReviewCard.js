@@ -10,6 +10,7 @@ export default function ReviewCard({ review }) {
   const [regenerating, setRegenerating] = useState(false);
   const { postReply, regenerateReply, dismissReview, posting } = useReview();
 
+  const isDemo = review.source === 'demo';
   const isBad = review.rating <= 3;
   const statusColors = {
     pending:   'badge-yellow',
@@ -86,7 +87,7 @@ export default function ReviewCard({ review }) {
               <X size={14} /> Dismiss
             </button>
             <button onClick={handlePost} disabled={posting || !reply.trim()} className="btn-primary flex-1 justify-center text-sm py-2">
-              {posting ? <><Loader2 size={14} className="animate-spin" /> Posting to Google...</> : <><Send size={14} /> Post Reply to Google</>}
+              {posting ? <><Loader2 size={14} className="animate-spin" /> {isDemo ? 'Saving demo reply...' : 'Posting to Google...'}</> : <><Send size={14} /> {isDemo ? 'Save demo reply locally' : 'Post Reply to Google'}</>}
             </button>
           </div>
         </div>
@@ -97,7 +98,7 @@ export default function ReviewCard({ review }) {
         <div className="border-t border-gray-100 pt-3">
           <button onClick={() => setExpanded(!expanded)} className="text-xs text-gray-400 flex items-center gap-1 hover:text-gray-600">
             {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            {expanded ? 'Hide reply' : 'View posted reply'}
+            {expanded ? 'Hide reply' : isDemo ? 'View local demo reply' : 'View posted reply'}
           </button>
           {expanded && (
             <p className="mt-2 text-sm text-gray-600 bg-green-50 rounded-lg px-3 py-2.5 leading-relaxed">

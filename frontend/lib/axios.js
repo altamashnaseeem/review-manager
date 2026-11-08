@@ -23,6 +23,7 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
+    if (error.response?.data?.code === 'GOOGLE_CONNECTION_REQUIRED' && typeof window !== 'undefined') window.location.href = '/connect-google';
     return Promise.reject(error);
   }
 );

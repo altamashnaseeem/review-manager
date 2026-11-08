@@ -27,35 +27,39 @@ const RATINGS = [
 
 export default function ReviewsPage() {
   const { selectedBusiness, businesses } = useBusiness();
-  const { reviews, loading, total, fetchReviews } = useReview();
+  const { reviews, loading, total, pages, fetchReviews } = useReview();
+  const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [ratingFilter, setRatingFilter] = useState('');
   const [showAddBusiness, setShowAddBusiness] = useState(false);
 
+  useEffect(() => { setPage(1); }, [selectedBusiness?._id]);
+
   // This runs whenever business or filters change
   useEffect(() => {
-    if (selectedBusiness?._id) {
+    if (selectedBusiness?.googleConnected && selectedBusiness?.reviewsSynced) {
       loadReviews();
     }
-  }, [selectedBusiness, statusFilter, ratingFilter]);
+  }, [selectedBusiness, statusFilter, ratingFilter, page]);
 
   const loadReviews = () => {
     if (!selectedBusiness?._id) return;
     
-    const filters = {};
+    const filters = { page };
     if (statusFilter) filters.status = statusFilter;
     if (ratingFilter) filters.rating = ratingFilter;
 
-    console.log('Fetching with filters:', filters); // debug
     fetchReviews(selectedBusiness._id, filters);
   };
 
   const handleStatusFilter = (value) => {
+    setPage(1);
     setRatingFilter(''); // reset rating when changing status
     setStatusFilter(value);
   };
 
   const handleRatingFilter = (e) => {
+    setPage(1);
     setStatusFilter(''); // reset status when filtering by rating
     setRatingFilter(e.target.value);
   };
@@ -141,7 +145,7 @@ export default function ReviewsPage() {
                   </span>
                 )}
                 <button
-                  onClick={() => { setStatusFilter(''); setRatingFilter(''); }}
+                  onClick={() => { setPage(1); setStatusFilter(''); setRatingFilter(''); }}
                   className="text-xs text-red-500 hover:underline ml-1"
                 >
                   Clear filters
@@ -173,6 +177,11 @@ export default function ReviewsPage() {
                 ))}
               </div>
             )}
+            {pages > 1 && <nav aria-label="Review pagination" className="mt-6 flex items-center justify-between">
+              <button className="btn-secondary" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>Previous page</button>
+              <span className="text-sm text-gray-500">Page {page} of {pages}</span>
+              <button className="btn-secondary" disabled={loading || page >= pages} onClick={() => setPage(p => p + 1)}>Next page</button>
+            </nav>}
           </>
         )}
       </div>

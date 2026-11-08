@@ -1,5 +1,7 @@
 'use client';
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from './AuthContext';
+import { useBusiness } from './BusinessContext';
 import api from '../lib/axios';
 import toast from 'react-hot-toast';
 
@@ -15,6 +17,8 @@ const initialState = {
 
 const reviewReducer = (state, action) => {
   switch (action.type) {
+    case 'RESET':
+      return { ...initialState };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_POSTING':
@@ -37,13 +41,21 @@ const ReviewContext = createContext(null);
 export const ReviewProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reviewReducer, initialState);
 
+  const { user } = useAuth();
+  const { selectedBusiness } = useBusiness();
+  const selection = `${user?.id || ''}/${selectedBusiness?._id || ''}`;
+  const activeSelection = useRef(selection);
+  activeSelection.current = selection;
+  useEffect(() => { dispatch({ type: 'RESET' }); }, [selection]);
+
   const fetchReviews = useCallback(async (businessId, filters = {}) => {
     if (!businessId) return;
+    const requestedSelection = activeSelection.current;
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const params = new URLSearchParams(filters).toString();
       const { data } = await api.get(`/reviews/${businessId}?${params}`);
-      dispatch({ type: 'SET_REVIEWS', payload: data });
+      if (activeSelection.current === requestedSelection) dispatch({ type: 'SET_REVIEWS', payload: data });
     } catch (error) {
       dispatch({ type: 'SET_LOADING', payload: false });
       toast.error('Failed to load reviews');
@@ -52,9 +64,10 @@ export const ReviewProvider = ({ children }) => {
 
   const fetchStats = useCallback(async (businessId) => {
     if (!businessId) return;
+    const requestedSelection = activeSelection.current;
     try {
       const { data } = await api.get(`/reviews/${businessId}/stats`);
-      dispatch({ type: 'SET_STATS', payload: data.stats });
+      if (activeSelection.current === requestedSelection) dispatch({ type: 'SET_STATS', payload: data.stats });
     } catch (error) {
       console.error('Failed to fetch stats');
     }
@@ -65,7 +78,7 @@ export const ReviewProvider = ({ children }) => {
     try {
       const { data } = await api.post(`/reviews/${reviewId}/post-reply`, { finalReply });
       dispatch({ type: 'UPDATE_REVIEW', payload: data.review });
-      toast.success('Reply posted to Google successfully!');
+      toast.success(data.message);
       return { success: true };
     } catch (error) {
       dispatch({ type: 'SET_POSTING', payload: false });

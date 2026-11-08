@@ -12,6 +12,8 @@ const reviewSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    source: { type: String, enum: ['google', 'demo', 'legacy'], default: 'legacy' },
+    googleUpdatedAt: Date,
     reviewerName: {
       type: String,
       default: 'Anonymous',
