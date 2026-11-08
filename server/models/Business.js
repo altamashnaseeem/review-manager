@@ -55,6 +55,7 @@ const businessSchema = new mongoose.Schema(
       type: Number,
       min: 1,
       max: 5,
+      validate: { validator: Number.isInteger, message: 'Alert threshold must be a whole number from 1 to 5' },
       default: 3, // alert if rating is 3 or below
     },
     autoReplyEnabled: {

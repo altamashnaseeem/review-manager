@@ -119,6 +119,9 @@ notification environment variables remain applicable.
 - **Sync failed:** stay on onboarding and retry. The dashboard/review API requires
   connection, selected location, and a completed initial sync.
 
+For the rating-triggered WhatsApp alerts, AI drafts, and owner approval workflow,
+see [REVIEW_ALERTS_SETUP.md](REVIEW_ALERTS_SETUP.md).
+
 ## Automated checks
 
 ```sh

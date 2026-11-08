@@ -222,7 +222,8 @@ test('Google Business integration', async t => {
     assert.equal(reply.status, 200);
     assert.match(reply.data.message, /nothing was posted/);
     assert.equal(reply.data.review.replyStatus, 'posted');
-    const ai = await call(`/reviews/${reviews[0]._id}/regenerate`, { method: 'POST', body: {} });
+    assert.equal((await call(`/reviews/${reviews[0]._id}/regenerate`, { method: 'POST', body: {} })).status, 409);
+    const ai = await call(`/reviews/${reviews[1]._id}/regenerate`, { method: 'POST', body: {} });
     assert.match(ai.data.aiSuggestedReply, /Demo reply/);
     process.env.NODE_ENV = 'production';
     assert.equal((await call(`/business/${id}/google/demo`, { method: 'POST', body: {} })).status, 404);

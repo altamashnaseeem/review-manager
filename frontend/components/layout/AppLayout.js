@@ -14,7 +14,7 @@ export default function AppLayout({ children }) {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push('/login');
+      router.replace(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
   }, [isAuthenticated, loading, router]);
 

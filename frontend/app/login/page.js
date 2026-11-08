@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Star, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { loginDestination } from '../../lib/reviewNavigation';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
@@ -13,14 +14,14 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) router.replace('/connect-google');
+    if (isAuthenticated) router.replace(loginDestination(window.location.search));
   }, [isAuthenticated]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     const result = await login(form.email, form.password);
-    if (result.success) router.replace('/connect-google');
+    if (result.success) router.replace(loginDestination(window.location.search));
     setLoading(false);
   };
 

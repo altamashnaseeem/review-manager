@@ -36,7 +36,7 @@ const reviewSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    // AI generated reply from Claude
+    // AI generated draft; posting always requires owner approval
     aiSuggestedReply: {
       type: String,
       default: null,
@@ -48,9 +48,23 @@ const reviewSchema = new mongoose.Schema(
     },
     replyStatus: {
       type: String,
-      enum: ['pending', 'approved', 'posted', 'dismissed'],
+      enum: ['pending', 'approved', 'posting', 'posted', 'dismissed'],
       default: 'pending',
     },
+    approvedAt: Date,
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    replyLockUntil: { type: Date, select: false },
+    replyError: { type: String, default: null },
+    isDemoEvent: { type: Boolean, default: false },
+    alertEligible: { type: Boolean, default: false },
+    alertStatus: { type: String, enum: ['pending', 'sending', 'accepted', 'failed', 'simulated', 'skipped'], default: 'skipped' },
+    alertAttemptCount: { type: Number, default: 0 },
+    alertNextAttemptAt: Date,
+    alertLockUntil: { type: Date, select: false },
+    alertError: { type: String, default: null },
+    alertMessageSid: String,
+    alertPreview: String,
+    aiReplyError: { type: String, default: null },
     // When owner clicked "Post Reply"
     repliedAt: {
       type: Date,
@@ -72,6 +86,8 @@ const reviewSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+reviewSchema.index({ business: 1, alertEligible: 1, alertSent: 1, alertNextAttemptAt: 1 });
 
 const Review = mongoose.model('Review', reviewSchema);
 export default Review;

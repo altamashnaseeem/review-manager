@@ -1,21 +1,38 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RefreshCw, Send, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import StarRating from '../ui/StarRating';
+import { useBusiness } from '../../context/BusinessContext';
+import api from '../../lib/axios';
+import toast from 'react-hot-toast';
 import { useReview } from '../../context/ReviewContext';
 
 export default function ReviewCard({ review }) {
-  const [reply, setReply] = useState(review.aiSuggestedReply || '');
+  const [reply, setReply] = useState(review.finalReply || review.aiSuggestedReply || '');
   const [expanded, setExpanded] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const { postReply, regenerateReply, dismissReview, posting } = useReview();
 
+  const { selectedBusiness } = useBusiness();
+  const [retryingAlert, setRetryingAlert] = useState(false);
+  const [alertState, setAlertState] = useState(review);
+  useEffect(() => { setReply(review.finalReply || review.aiSuggestedReply || ''); setAlertState(review); }, [review]);
+  const retryAlert = async () => {
+    setRetryingAlert(true);
+    try {
+      const { data } = await api.post(`/reviews/${review._id}/retry-alert`);
+      setAlertState(data.review);
+      toast.success(data.review.alertStatus === 'accepted' ? 'WhatsApp alert accepted by Twilio' : 'Alert retry processed');
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not retry alert'); }
+    finally { setRetryingAlert(false); }
+  };
   const isDemo = review.source === 'demo';
-  const isBad = review.rating <= 3;
+  const isBad = review.rating <= (selectedBusiness?.alertOnRating ?? 3);
   const statusColors = {
     pending:   'badge-yellow',
     approved:  'badge-blue',
     posted:    'badge-green',
+    posting:   'badge-blue',
     dismissed: 'badge-gray',
   };
 
@@ -63,8 +80,17 @@ export default function ReviewCard({ review }) {
         </p>
       )}
 
-      {/* AI Reply section — only for bad reviews that are pending */}
-      {isBad && review.replyStatus === 'pending' && (
+      {alertState.alertStatus === 'simulated' && <p className="text-xs text-amber-800 mb-3">{alertState.alertPreview}</p>}
+      {alertState.alertStatus === 'accepted' && <p className="text-xs text-green-700 mb-3">WhatsApp alert accepted by Twilio. Delivery can be checked in Twilio message logs.</p>}
+      {alertState.alertStatus === 'failed' && <div className="text-xs text-red-700 mb-3">
+        <p>{alertState.alertError} Attempt {alertState.alertAttemptCount} of 5.</p>
+        <button className="underline mt-1" disabled={retryingAlert} onClick={retryAlert}>{retryingAlert ? 'Retrying…' : 'Retry WhatsApp alert'}</button>
+      </div>}
+      {review.aiReplyError && <p className="text-xs text-amber-800 mb-3">{review.aiReplyError}</p>}
+      {review.replyError && <p role="alert" className="text-xs text-red-700 mb-3">{review.replyError}</p>}
+      {review.replyStatus === 'posting' && <p className="text-sm text-blue-700">Posting your approved reply. Refresh to check the result.</p>}
+      {/* AI drafts are posted only after the owner approves the text. */}
+      {(isBad || review.replyStatus === 'approved') && ['pending', 'approved'].includes(review.replyStatus) && (
         <div className="border-t border-gray-100 pt-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🤖 AI suggested reply</span>
@@ -79,15 +105,17 @@ export default function ReviewCard({ review }) {
             onChange={(e) => setReply(e.target.value)}
             rows={4}
             className="input-field resize-none text-sm leading-relaxed mb-3"
-            placeholder="AI reply will appear here..."
+            aria-label="Reply to this review"
+            placeholder="Generate an AI draft or write your reply here..."
           />
 
+          <p className="text-xs text-gray-500 mb-3">Edit the draft if needed. Approving posts this exact text to Google on your behalf.</p>
           <div className="flex gap-2">
             <button onClick={handleDismiss} className="btn-secondary text-sm px-3 py-2">
               <X size={14} /> Dismiss
             </button>
             <button onClick={handlePost} disabled={posting || !reply.trim()} className="btn-primary flex-1 justify-center text-sm py-2">
-              {posting ? <><Loader2 size={14} className="animate-spin" /> {isDemo ? 'Saving demo reply...' : 'Posting to Google...'}</> : <><Send size={14} /> {isDemo ? 'Save demo reply locally' : 'Post Reply to Google'}</>}
+              {posting ? <><Loader2 size={14} className="animate-spin" /> {isDemo ? 'Saving demo reply...' : 'Posting to Google...'}</> : <><Send size={14} /> {isDemo ? 'Save demo reply locally' : 'Approve & post to Google'}</>}
             </button>
           </div>
         </div>

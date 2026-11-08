@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Bell, Lock, Trash2, Loader2, Save } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
 import { useAuth } from '../../context/AuthContext';
@@ -16,8 +16,10 @@ export default function SettingsPage() {
     alertPhone: selectedBusiness?.alertPhone || '',
     alertEmail: selectedBusiness?.alertEmail || '',
     alertOnRating: selectedBusiness?.alertOnRating || 3,
-    autoReplyEnabled: selectedBusiness?.autoReplyEnabled || false,
   });
+  useEffect(() => {
+    setBizForm({ alertPhone: selectedBusiness?.alertPhone || '', alertEmail: selectedBusiness?.alertEmail || '', alertOnRating: selectedBusiness?.alertOnRating ?? 3 });
+  }, [selectedBusiness]);
   const [loading, setLoading] = useState(false);
 
   const tabs = [
@@ -148,20 +150,7 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
                     className="w-full accent-blue-600"
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Auto-reply mode</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Let AI post replies automatically without your approval</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox" checked={bizForm.autoReplyEnabled}
-                      onChange={(e) => setBizForm({ ...bizForm, autoReplyEnabled: e.target.checked })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <p className="text-sm text-gray-600 p-4 bg-gray-50 rounded-xl">New reviews at or below your threshold trigger a WhatsApp alert and an AI draft. You approve the reply before it is posted to Google.</p>
                 <div className="flex gap-3 pt-2">
                   <button type="submit" disabled={loading} className="btn-primary">
                     {loading ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : <><Save size={14} /> Save changes</>}

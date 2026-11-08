@@ -102,7 +102,7 @@ export const ReviewProvider = ({ children }) => {
   const dismissReview = async (reviewId) => {
     try {
       const { data } = await api.put(`/reviews/${reviewId}/dismiss`);
-      dispatch({ type: 'UPDATE_REVIEW', payload: { ...data, _id: reviewId, replyStatus: 'dismissed' } });
+      dispatch({ type: 'UPDATE_REVIEW', payload: data.review });
       toast.success('Review dismissed');
       return { success: true };
     } catch (error) {

@@ -71,7 +71,7 @@ const updateBusiness = async (req, res, next) => {
     const business = await Business.findOneAndUpdate(
       { _id: req.params.id, owner: req.user.id },
       { $set: Object.fromEntries(Object.entries(req.body).filter(([key]) =>
-        ['name', 'alertPhone', 'alertEmail', 'alertOnRating', 'autoReplyEnabled', 'isActive'].includes(key))) },
+        ['name', 'alertPhone', 'alertEmail', 'alertOnRating', 'isActive'].includes(key))) },
       { new: true, runValidators: true }
     );
     if (!business) {

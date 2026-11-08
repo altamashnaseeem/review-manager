@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Star, Filter, Search, Building2, Plus } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
+import DemoReviewForm from '../../components/reviews/DemoReviewForm';
 import ReviewCard from '../../components/reviews/ReviewCard';
 import AddBusinessModal from '../../components/dashboard/AddBusinessModal';
 import EmptyState from '../../components/ui/EmptyState';
@@ -11,7 +12,7 @@ import { useReview } from '../../context/ReviewContext';
 
 const FILTERS = [
   { label: 'All Reviews', value: '' },
-  { label: 'Pending Reply (≤3★)', value: 'pending' },
+  { label: 'Needs reply', value: 'pending' },
   { label: 'Posted', value: 'posted' },
   { label: 'Dismissed', value: 'dismissed' },
 ];
@@ -26,26 +27,44 @@ const RATINGS = [
 ];
 
 export default function ReviewsPage() {
-  const { selectedBusiness, businesses } = useBusiness();
+  const { selectedBusiness, businesses, loaded, selectBusiness } = useBusiness();
   const { reviews, loading, total, pages, fetchReviews } = useReview();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [ratingFilter, setRatingFilter] = useState('');
   const [showAddBusiness, setShowAddBusiness] = useState(false);
 
+  const [linkedReview, setLinkedReview] = useState(null);
+  const [linkError, setLinkError] = useState('');
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get('business') && query.get('review')) setLinkedReview({ businessId: query.get('business'), reviewId: query.get('review') });
+  }, []);
+  useEffect(() => {
+    if (!linkedReview || !loaded) return;
+    const target = businesses.find(b => b._id === linkedReview.businessId);
+    if (!target) { setLinkError('This review link does not belong to one of your businesses.'); return; }
+    if (target._id !== selectedBusiness?._id) selectBusiness(target);
+  }, [linkedReview, loaded, businesses, selectedBusiness?._id]);
+  const clearLink = () => {
+    setLinkedReview(null); setLinkError(''); setPage(1);
+    window.history.replaceState({}, '', '/reviews');
+  };
+
   useEffect(() => { setPage(1); }, [selectedBusiness?._id]);
 
   // This runs whenever business or filters change
   useEffect(() => {
     if (selectedBusiness?.googleConnected && selectedBusiness?.reviewsSynced) {
-      loadReviews();
+      if (!linkedReview || linkedReview.businessId === selectedBusiness._id) loadReviews();
     }
-  }, [selectedBusiness, statusFilter, ratingFilter, page]);
+  }, [selectedBusiness, statusFilter, ratingFilter, page, linkedReview]);
 
   const loadReviews = () => {
     if (!selectedBusiness?._id) return;
     
     const filters = { page };
+    if (linkedReview) filters.reviewId = linkedReview.reviewId;
     if (statusFilter) filters.status = statusFilter;
     if (ratingFilter) filters.rating = ratingFilter;
 
@@ -53,12 +72,14 @@ export default function ReviewsPage() {
   };
 
   const handleStatusFilter = (value) => {
+    clearLink();
     setPage(1);
     setRatingFilter(''); // reset rating when changing status
     setStatusFilter(value);
   };
 
   const handleRatingFilter = (e) => {
+    clearLink();
     setPage(1);
     setStatusFilter(''); // reset status when filtering by rating
     setRatingFilter(e.target.value);
@@ -79,6 +100,9 @@ export default function ReviewsPage() {
           </div>
         </div>
 
+        {linkError && <p role="alert" className="text-red-700 mb-4">{linkError}</p>}
+        {linkedReview && <div className="mb-4 text-sm text-gray-600">Review opened from your alert. <button className="text-blue-600 underline" onClick={clearLink}>Show all reviews</button></div>}
+        <DemoReviewForm onCreated={() => { clearLink(); setStatusFilter(''); setRatingFilter(''); }} />
         {/* No business */}
         {businesses.length === 0 && (
           <div className="card">
@@ -111,7 +135,7 @@ export default function ReviewsPage() {
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                    {f.label}
+                    {f.value === 'pending' ? `Needs reply (≤${selectedBusiness.alertOnRating}★)` : f.label}
                   </button>
                 ))}
               </div>

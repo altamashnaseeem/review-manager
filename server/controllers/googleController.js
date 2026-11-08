@@ -114,7 +114,7 @@ export async function syncReviews(req, res, next) {
   try {
     const business = await ownedBusiness(req);
     if (!business) throw fail('Business not found', 404);
-    await syncBusinessReviews(business, { notify: false });
+    await syncBusinessReviews(business, { notify: true });
     res.json({ success: true, business });
   } catch (error) { next(error); }
 }
