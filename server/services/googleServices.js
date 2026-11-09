@@ -5,6 +5,7 @@ import { demoReviewPage } from '../fixtures/googleBusiness.js';
 
 export const BUSINESS_SCOPE = 'https://www.googleapis.com/auth/business.manage';
 export const demoEnabled = () => process.env.NODE_ENV === 'development' && process.env.GOOGLE_BUSINESS_MOCK === 'true';
+export const demoWhatsAppEnabled = () => demoEnabled() && process.env.DEMO_WHATSAPP_ENABLED === 'true';
 export const fail = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 
 function encryptionKey() {

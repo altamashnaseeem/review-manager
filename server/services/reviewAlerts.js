@@ -2,7 +2,7 @@ import Review from '../models/Review.js';
 import Business from '../models/Business.js';
 import { generateReviewReply } from './claudeService.js';
 import { sendWhatsAppAlert } from './twilioService.js';
-import { demoEnabled } from './googleServices.js';
+import { demoEnabled, demoWhatsAppEnabled } from './googleServices.js';
 import logger from '../utils/logger.js';
 
 export const MAX_ALERT_ATTEMPTS = 5;
@@ -19,6 +19,7 @@ export async function processReviewAlerts(business, { generateReply = generateRe
   if (business.isDemo && !demoEnabled()) return;
   const now = new Date();
   const candidates = await Review.find({
+    ...(business.isDemo && !demoWhatsAppEnabled() ? { demoWhatsAppRequested: { $ne: true } } : {}),
     business: business._id, alertEligible: true, alertSent: { $ne: true },
     alertStatus: { $nin: ['simulated', 'skipped'] },
     alertAttemptCount: { $lt: MAX_ALERT_ATTEMPTS }, rating: { $lte: business.alertOnRating },
@@ -31,6 +32,7 @@ export async function processReviewAlerts(business, { generateReply = generateRe
   for (const candidate of candidates) {
     // The database lease prevents overlapping workers from sending the same alert.
     const review = await Review.findOneAndUpdate({
+      ...(business.isDemo && !demoWhatsAppEnabled() ? { demoWhatsAppRequested: { $ne: true } } : {}),
       _id: candidate._id, alertSent: { $ne: true }, alertStatus: { $nin: ['simulated', 'skipped'] },
       replyStatus: { $in: ['pending', 'approved'] }, alertAttemptCount: { $lt: MAX_ALERT_ATTEMPTS },
       $or: [{ alertLockUntil: { $exists: false } }, { alertLockUntil: { $lte: now } }],
@@ -45,15 +47,16 @@ export async function processReviewAlerts(business, { generateReply = generateRe
         await review.save();
       }
       const details = {
-        to: business.alertPhone, businessName: business.name, reviewerName: review.reviewerName,
+        to: business.alertPhone, businessName: business.isDemo ? `${business.name} (DEMO TEST)` : business.name, reviewerName: review.reviewerName,
         rating: review.rating, comment: review.comment, aiSuggestedReply: review.aiSuggestedReply,
         replyLink: approvalLink(business._id, review._id),
       };
-      const result = business.isDemo ? null : await sendAlert(details);
-      if (!business.isDemo && !result?.sid) throw new Error('No Twilio message confirmation');
+      const sendRealWhatsApp = !business.isDemo || (review.isDemoEvent && review.demoWhatsAppRequested && demoWhatsAppEnabled());
+      const result = sendRealWhatsApp ? await sendAlert(details) : null;
+      if (sendRealWhatsApp && !result?.sid) throw new Error('No Twilio message confirmation');
       await Review.updateOne({ _id: review._id }, {
         $set: {
-          alertStatus: business.isDemo ? 'simulated' : 'accepted', alertSent: !business.isDemo,
+          alertStatus: sendRealWhatsApp ? 'accepted' : 'simulated', alertSent: sendRealWhatsApp,
           alertSentAt: new Date(), alertError: null,
           ...(result ? { alertMessageSid: result.sid } : { alertPreview: `Demo WhatsApp alert: ${review.rating}-star review for ${business.name}. Review and approve: ${details.replyLink}` }),
         }, $unset: { alertLockUntil: 1, alertNextAttemptAt: 1 },

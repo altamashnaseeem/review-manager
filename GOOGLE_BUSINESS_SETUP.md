@@ -71,9 +71,10 @@ Create a new business and choose **Use development demo**. It imports **125
 synthetic reviews** through three pages, opens the dashboard, supports filters
 and local reply simulation, and displays a persistent demo banner. It requires
 MongoDB and the app login, but no Google credentials, store, Groq, or Twilio.
-Demo replies never call Google; AI suggestions are fixed synthetic text and no
-WhatsApp messages are sent. Demo endpoints and demo review access are disabled
-outside explicit development mode, even if the mock flag is true. Create a
+Demo replies never call Google and AI suggestions are fixed synthetic text.
+WhatsApp messages are simulated by default. An explicitly enabled real WhatsApp
+test option is documented in [REVIEW_ALERTS_SETUP.md](REVIEW_ALERTS_SETUP.md).
+Demo endpoints and demo review access are disabled outside explicit development mode, even if the mock flag is true. Create a
 separate business when you are ready to connect a real profile.
 
 For real end-to-end validation, ask an actual owner of a verified Business Profile

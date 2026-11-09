@@ -133,19 +133,64 @@ Use the existing development demo (`NODE_ENV=development`,
 - Simulate 4 stars: the review is stored but no alert is triggered.
 - Change the threshold to 4 and simulate 4 stars: an alert/draft should appear and
   the reply editor should be available for that review.
-- Edit the draft and save the local demo reply. No Google reply or WhatsApp message
-  is sent, and demo AI text requires no external AI key.
+- Edit the draft and save the local demo reply. No Google reply is sent, and demo
+  AI text requires no external AI key. WhatsApp stays simulated unless you enable
+  and select the optional real test described below.
+
+## Optional: receive a real WhatsApp alert from a demo review
+
+This test does not require a real Google business. Set these in `server/.env`:
+
+```dotenv
+NODE_ENV=development
+GOOGLE_BUSINESS_MOCK=true
+DEMO_WHATSAPP_ENABLED=true
+```
+
+Keep your Twilio credentials and sender configured as above, then restart the
+backend and refresh the app. Save your enrolled WhatsApp number, including its
+country code, as Demo Cafe's alert number in **Settings → Business Settings**.
+
+1. Open **Reviews → Test a new customer review**.
+2. Select a customer rating at or below the business's saved alert threshold.
+   For ratings strictly below 4, set the threshold to 3. A threshold of 4 includes
+   4-star reviews too; any threshold from 1 through 5 is supported.
+3. Select the unchecked **Send a real WhatsApp test to [your number]** checkbox.
+4. Click **Simulate review & test WhatsApp**. The server saves the synthetic review
+   and draft, and submits a labeled **DEMO TEST** alert to the business's saved
+   number through Twilio. The request cannot override the recipient number.
+5. Look for `accepted` on the review card and check your phone. If delivery fails,
+   inspect the Message SID in Twilio logs. Provider acceptance is not proof of
+   phone delivery. Failed submissions use the existing bounded retry queue.
+
+The checkbox resets after submission and when switching businesses. Leaving it
+unchecked still produces only a local alert preview, even with the environment
+switch enabled. Above-threshold reviews never trigger WhatsApp sends. The initial
+125 demo reviews never send WhatsApp alerts, and demo AI drafts still need no AI
+key. Clicking approval on a demo always saves locally; it never posts to Google.
+
+The switch works only with both explicit development mode and the Google demo
+flag. Setting it in production cannot enable demo endpoints. Turn it off when
+finished. Disabling it pauses unsent opted-in demo alerts; reenabling it allows
+those queued retries to resume. Old local-only previews are never upgraded to
+real messages by enabling the switch.
+
+A joined Twilio Sandbox recipient and an active customer-service window (or an
+applicable approved template) are still required. Twilio may charge for real
+messages. `FRONTEND_URL=localhost` lets you test delivery but an approval link
+opened on your phone needs a public frontend URL.
 
 Simulated reviews persist across subsequent demo syncs. Demo endpoints remain
-unavailable in production. To validate real Google fetching and actual WhatsApp
-delivery, use an authorized real Business Profile and an enrolled/eligible test
-recipient; do not create a fake Google business.
+unavailable in production. Validating real Google fetching and the production
+workflow still requires an authorized real Business Profile. The optional test
+above checks WhatsApp delivery without one; do not create a fake Google business.
 
 Automated backend tests mock Google, AI, and Twilio transports. They cover silent
 initial import, threshold boundaries, retry without new reviews, overlapping
 workers, AI failure, owner authorization/approval, duplicate submission guards,
-Google failure/retry, persistent demo events, and template payloads. No real
-provider messages are sent during the tests.
+Google failure/retry, persistent demo events, opted-in demo delivery, recipient
+checks, paused retries, and template payloads. No real provider messages are sent
+during the tests.
 
 References:
 - https://www.twilio.com/docs/whatsapp/sandbox

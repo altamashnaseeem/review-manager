@@ -11,6 +11,7 @@ const initialState = {
   error: null,
   loaded: false,
   demoEnabled: false,
+  demoWhatsAppEnabled: false,
 };
 
 const businessReducer = (state, action) => {
@@ -22,6 +23,7 @@ const businessReducer = (state, action) => {
     case 'SET_BUSINESSES':
       return { ...state, businesses: action.payload.businesses, loading: false, loaded: true, error: null,
         demoEnabled: action.payload.demoEnabled,
+        demoWhatsAppEnabled: action.payload.demoWhatsAppEnabled === true,
         selectedBusiness: action.payload.businesses.find(b => b._id === state.selectedBusiness?._id)
           || action.payload.businesses.find(b => b.googleConnected && b.reviewsSynced) || action.payload.businesses[0] || null };
     case 'ADD_BUSINESS':

@@ -1,7 +1,7 @@
 import Business from '../models/Business.js';
 import logger from '../utils/logger.js';
 import { randomUUID } from 'node:crypto';
-import { demoEnabled } from '../services/googleServices.js';
+import { demoEnabled, demoWhatsAppEnabled } from '../services/googleServices.js';
 
 // @desc    Add a new business
 // @route   POST /api/business
@@ -42,7 +42,7 @@ const addBusiness = async (req, res, next) => {
 const getMyBusinesses = async (req, res, next) => {
   try {
     const businesses = await Business.find({ owner: req.user.id });
-    res.json({ success: true, count: businesses.length, businesses, demoEnabled: demoEnabled() });
+    res.json({ success: true, count: businesses.length, businesses, demoEnabled: demoEnabled(), demoWhatsAppEnabled: demoWhatsAppEnabled() });
   } catch (error) {
     next(error);
   }

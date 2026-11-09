@@ -7,7 +7,7 @@ import { google } from 'googleapis';
 import twilio from 'twilio';
 
 Object.assign(process.env, {
-  NODE_ENV: 'development', GOOGLE_BUSINESS_MOCK: 'true', JWT_SECRET: 'workflow-test-only',
+  NODE_ENV: 'development', GOOGLE_BUSINESS_MOCK: 'true', DEMO_WHATSAPP_ENABLED: 'false', JWT_SECRET: 'workflow-test-only',
   GOOGLE_CLIENT_ID: 'test.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'test-secret',
   GOOGLE_REDIRECT_URI: 'http://localhost:5000/api/business/google/callback',
   GOOGLE_TOKEN_ENCRYPTION_KEY: randomBytes(32).toString('base64'),
@@ -213,6 +213,83 @@ test('review alerts and approval workflow', async t => {
     process.env.NODE_ENV = 'production';
     assert.equal((await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 1 } })).status, 404);
     process.env.NODE_ENV = 'development';
+  });
+  await t.test('real demo WhatsApp is disabled by default and forged opt-ins create no review', async () => {
+    const business = await createBusiness({ isDemo: true });
+    assert.equal((await call('/business')).data.demoWhatsAppEnabled, false);
+    const count = await Review.countDocuments({ business: business._id });
+    const denied = await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 1, sendWhatsApp: true } });
+    assert.equal(denied.status, 403);
+    assert.equal(await Review.countDocuments({ business: business._id }), count);
+    assert.equal((await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 1, sendWhatsApp: 'true' } })).status, 400);
+  });
+  await t.test('enabled demo sends only explicitly opted-in qualifying events to the saved phone and keeps Google local', async () => {
+    process.env.DEMO_WHATSAPP_ENABLED = 'true';
+    let calls = 0;
+    const transport = mock.method(twilio.Twilio.prototype, 'request', async options => {
+      calls++;
+      assert.equal(options.data.To, 'whatsapp:+15555555556');
+      assert.match(options.data.Body, /DEMO TEST/);
+      assert.match(options.data.Body, /Demo reply/);
+      return { statusCode: 201, body: { sid: 'SMdemooptin', status: 'queued' }, headers: {} };
+    });
+    const googleTransport = mock.method(google.auth.OAuth2.prototype, 'request', async () => { throw new Error('Demo must never call Google'); });
+    try {
+      const business = await createBusiness({ isDemo: true, alertOnRating: 2 });
+      assert.equal((await call('/business')).data.demoWhatsAppEnabled, true);
+      const ordinary = await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 1 } });
+      assert.equal(ordinary.data.review.alertStatus, 'simulated'); assert.equal(calls, 0);
+      const high = await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 3, sendWhatsApp: true } });
+      assert.equal(high.data.review.alertStatus, 'skipped'); assert.equal(calls, 0);
+      const boundary = await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 2, sendWhatsApp: true, to: '+19999999999' } });
+      assert.equal(boundary.status, 201); assert.equal(boundary.data.review.alertStatus, 'accepted');
+      assert.equal(boundary.data.review.demoWhatsAppRequested, true); assert.equal(boundary.data.review.alertSent, true);
+      assert.equal(boundary.data.review.alertMessageSid, 'SMdemooptin'); assert.match(boundary.data.message, /Twilio accepted/);
+      assert.equal(calls, 1);
+      await processReviewAlerts(business); assert.equal(calls, 1);
+      const approved = await call(`/reviews/${boundary.data.review._id}/post-reply`, { method: 'POST', body: { finalReply: 'Local demo owner approval' } });
+      assert.equal(approved.status, 200); assert.match(approved.data.message, /nothing was posted/);
+      assert.equal(googleTransport.mock.callCount(), 0);
+    } finally { transport.mock.restore(); googleTransport.mock.restore(); process.env.DEMO_WHATSAPP_ENABLED = 'false'; }
+  });
+  await t.test('failed opted-in demo sends retry; disabling the server switch pauses them without converting to simulation', async () => {
+    process.env.DEMO_WHATSAPP_ENABLED = 'true';
+    let calls = 0;
+    const transport = mock.method(twilio.Twilio.prototype, 'request', async () => {
+      calls++;
+      if (calls === 1) throw new Error('Provider unavailable; do not expose raw credentials');
+      return { statusCode: 201, body: { sid: 'SMdemoretry', status: 'queued' }, headers: {} };
+    });
+    try {
+      const business = await createBusiness({ isDemo: true });
+      const response = await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 1, sendWhatsApp: true } });
+      assert.equal(response.status, 201); assert.equal(response.data.review.alertStatus, 'failed');
+      assert.match(response.data.message, /WhatsApp failed/);
+      const id = response.data.review._id;
+      await Review.updateOne({ _id: id }, { alertNextAttemptAt: new Date(0) });
+      process.env.DEMO_WHATSAPP_ENABLED = 'false';
+      await processReviewAlerts(business);
+      assert.equal(calls, 1); assert.equal((await Review.findById(id)).alertStatus, 'failed');
+      assert.equal((await call(`/reviews/${id}/retry-alert`, { method: 'POST', body: {} })).status, 403);
+      process.env.DEMO_WHATSAPP_ENABLED = 'true';
+      await processReviewAlerts(business);
+      assert.equal(calls, 2); assert.equal((await Review.findById(id)).alertStatus, 'accepted');
+      assert.equal((await Review.findById(id)).alertAttemptCount, 2);
+    } finally { transport.mock.restore(); process.env.DEMO_WHATSAPP_ENABLED = 'false'; }
+  });
+  await t.test('real demo WhatsApp is owner-only and unavailable outside explicit development mode', async () => {
+    const business = await createBusiness({ isDemo: true });
+    process.env.DEMO_WHATSAPP_ENABLED = 'true';
+    const transport = mock.method(twilio.Twilio.prototype, 'request', async () => { throw new Error('No provider calls allowed'); });
+    try {
+      assert.equal((await call(`/reviews/${business._id}/demo-review`, { token: other.token, method: 'POST', body: { rating: 1, sendWhatsApp: true } })).status, 404);
+      process.env.NODE_ENV = 'production';
+      assert.equal((await call('/business')).data.demoWhatsAppEnabled, false);
+      assert.equal((await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 1, sendWhatsApp: true } })).status, 404);
+      process.env.NODE_ENV = 'development'; process.env.GOOGLE_BUSINESS_MOCK = 'false';
+      assert.equal((await call(`/reviews/${business._id}/demo-review`, { method: 'POST', body: { rating: 1, sendWhatsApp: true } })).status, 404);
+      assert.equal(transport.mock.callCount(), 0);
+    } finally { transport.mock.restore(); process.env.NODE_ENV = 'development'; process.env.GOOGLE_BUSINESS_MOCK = 'true'; process.env.DEMO_WHATSAPP_ENABLED = 'false'; }
   });
   await t.test('Twilio uses explicit international numbers and approved templates for production', async () => {
     assert.equal(normalizeWhatsAppNumber('+91 98765-43210'), 'whatsapp:+919876543210');

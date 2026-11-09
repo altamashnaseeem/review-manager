@@ -55,6 +55,7 @@ const reviewSchema = new mongoose.Schema(
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     replyLockUntil: { type: Date, select: false },
     replyError: { type: String, default: null },
+    demoWhatsAppRequested: { type: Boolean, default: false },
     isDemoEvent: { type: Boolean, default: false },
     alertEligible: { type: Boolean, default: false },
     alertStatus: { type: String, enum: ['pending', 'sending', 'accepted', 'failed', 'simulated', 'skipped'], default: 'skipped' },

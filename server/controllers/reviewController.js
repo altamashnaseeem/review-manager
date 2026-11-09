@@ -1,7 +1,7 @@
 import Review from '../models/Review.js';
 import Business from '../models/Business.js';
 import { generateReviewReply } from '../services/claudeService.js';
-import { postReplyToGoogle, demoEnabled } from '../services/googleServices.js';
+import { postReplyToGoogle, demoEnabled, demoWhatsAppEnabled } from '../services/googleServices.js';
 import { randomUUID } from 'node:crypto';
 import mongoose from 'mongoose';
 import { processReviewAlerts } from '../services/reviewAlerts.js';
@@ -209,6 +209,7 @@ const retryAlert = async (req, res, next) => {
     if (!review) return res.status(404).json({ success: false, message: 'Review not found' });
     if (review.business.owner.toString() !== req.user.id) return res.status(403).json({ success: false, message: 'Not authorized' });
     if (!requireConnection(review.business, res)) return;
+    if (review.business.isDemo && review.demoWhatsAppRequested && !demoWhatsAppEnabled()) return res.status(403).json({ success: false, message: 'Enable DEMO_WHATSAPP_ENABLED on the development server to retry this WhatsApp test.' });
     const queued = await Review.findOneAndUpdate({ _id: review._id, alertEligible: true, alertStatus: 'failed', alertSent: false }, {
       $set: { alertAttemptCount: 0, alertStatus: 'pending', alertError: null }, $unset: { alertNextAttemptAt: 1, alertLockUntil: 1 },
     }, { new: true });
@@ -227,17 +228,26 @@ const simulateReview = async (req, res, next) => {
     const rating = Number(req.body.rating);
     const comment = typeof req.body.comment === 'string' ? req.body.comment.trim() : '';
     if (!Number.isInteger(rating) || rating < 1 || rating > 5 || comment.length > 4096) return res.status(400).json({ success: false, message: 'Choose a rating from 1 to 5 and a comment under 4096 characters.' });
+    if (req.body.sendWhatsApp !== undefined && typeof req.body.sendWhatsApp !== 'boolean') return res.status(400).json({ success: false, message: 'sendWhatsApp must be true or false.' });
+    const sendWhatsApp = req.body.sendWhatsApp === true;
+    if (sendWhatsApp && !demoWhatsAppEnabled()) return res.status(403).json({ success: false, message: 'Enable DEMO_WHATSAPP_ENABLED=true on the development server to send real WhatsApp tests.' });
     const eligible = rating <= business.alertOnRating;
     const review = await Review.create({
       business: business._id, googleReviewId: `demo-event-${randomUUID()}`, source: 'demo', isDemoEvent: true,
-      reviewerName: 'Simulated customer', rating, comment, reviewDate: new Date(), googleUpdatedAt: new Date(),
+      reviewerName: 'Simulated customer', rating, comment, demoWhatsAppRequested: sendWhatsApp, reviewDate: new Date(), googleUpdatedAt: new Date(),
       alertEligible: eligible, alertStatus: eligible ? 'pending' : 'skipped',
     });
     const [totals] = await Review.aggregate([{ $match: { business: business._id } }, { $group: { _id: null, count: { $sum: 1 }, average: { $avg: '$rating' } } }]);
     business.totalReviews = totals.count; business.overallRating = totals.average; await business.save();
     await processReviewAlerts(business);
-    res.status(201).json({ success: true, review: await Review.findById(review._id),
-      message: eligible ? 'Demo alert simulated and AI draft prepared. No WhatsApp message was sent.' : 'Rating is above your threshold. No alert was triggered.' });
+    const stored = await Review.findById(review._id);
+    let message = 'Rating is above your threshold. No alert was triggered.';
+    if (eligible && !sendWhatsApp) message = 'Demo alert simulated and AI draft prepared. No WhatsApp message was sent.';
+    if (eligible && sendWhatsApp) message = stored.alertStatus === 'accepted'
+      ? 'Twilio accepted the demo WhatsApp test. Check your phone or Twilio message logs.'
+      : stored.alertStatus === 'failed' ? 'Demo review saved, but WhatsApp failed. Check the review card and Twilio setup; failed sends retry automatically.'
+      : 'Demo WhatsApp test queued. Check the review card for its status.';
+    res.status(201).json({ success: true, review: stored, message });
   } catch (error) { next(error); }
 };
 
