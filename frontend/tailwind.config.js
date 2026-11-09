@@ -8,6 +8,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        raised: 'rgb(var(--raised) / <alpha-value>)',
+        ink: 'rgb(var(--ink) / <alpha-value>)',
+        secondary: 'rgb(var(--secondary) / <alpha-value>)',
+        muted: 'rgb(var(--muted) / <alpha-value>)',
+        line: 'rgb(var(--line) / <alpha-value>)',
+        accent: 'rgb(var(--accent) / <alpha-value>)',
+        action: 'rgb(var(--action) / <alpha-value>)',
+        'action-hover': 'rgb(var(--action-hover) / <alpha-value>)',
+        'accent-soft': 'rgb(var(--accent-soft) / <alpha-value>)',
+        positive: 'rgb(var(--success) / <alpha-value>)',
+        'positive-soft': 'rgb(var(--success-soft) / <alpha-value>)',
+        negative: 'rgb(var(--danger) / <alpha-value>)',
+        'negative-soft': 'rgb(var(--danger-soft) / <alpha-value>)',
+        caution: 'rgb(var(--warning) / <alpha-value>)',
+        'caution-soft': 'rgb(var(--warning-soft) / <alpha-value>)',
         primary: {
           50:  '#f0f9ff',
           100: '#e0f2fe',
@@ -32,7 +49,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
       },
     },
   },

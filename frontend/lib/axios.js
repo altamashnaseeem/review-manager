@@ -21,8 +21,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     }
+    if (error.response?.data?.code === 'GOOGLE_CONNECTION_REQUIRED' && typeof window !== 'undefined') window.location.href = '/connect-google';
+    if (error.response?.data?.code === 'SUBSCRIPTION_EXPIRED' && typeof window !== 'undefined' && !window.location.search.includes('subscription=expired')) window.location.href = '/dashboard?subscription=expired';
     return Promise.reject(error);
   }
 );

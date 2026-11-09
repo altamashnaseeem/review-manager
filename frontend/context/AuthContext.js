@@ -89,13 +89,20 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       dispatch({ type: 'LOGIN_SUCCESS', payload: { token: data.token, user: data.user } });
-      toast.success('Account created! Welcome to ReviewManager.');
+      toast.success('Account created! Welcome to RepliQ.');
       return { success: true };
     } catch (error) {
       const msg = error.response?.data?.message || 'Registration failed';
       toast.error(msg);
       return { success: false, message: msg };
     }
+  };
+
+  const refreshUser = async () => {
+    const { data } = await api.get('/auth/me');
+    localStorage.setItem('user', JSON.stringify(data.user));
+    dispatch({ type: 'UPDATE_USER', payload: data.user });
+    return data.user;
   };
 
   const logout = () => {
@@ -118,7 +125,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, updatePassword }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout, updatePassword, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,20 +1,38 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RefreshCw, Send, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import StarRating from '../ui/StarRating';
+import { useBusiness } from '../../context/BusinessContext';
+import api from '../../lib/axios';
+import toast from 'react-hot-toast';
 import { useReview } from '../../context/ReviewContext';
 
 export default function ReviewCard({ review }) {
-  const [reply, setReply] = useState(review.aiSuggestedReply || '');
+  const [reply, setReply] = useState(review.finalReply || review.aiSuggestedReply || '');
   const [expanded, setExpanded] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const { postReply, regenerateReply, dismissReview, posting } = useReview();
 
-  const isBad = review.rating <= 3;
+  const { selectedBusiness } = useBusiness();
+  const [retryingAlert, setRetryingAlert] = useState(false);
+  const [alertState, setAlertState] = useState(review);
+  useEffect(() => { setReply(review.finalReply || review.aiSuggestedReply || ''); setAlertState(review); }, [review]);
+  const retryAlert = async () => {
+    setRetryingAlert(true);
+    try {
+      const { data } = await api.post(`/reviews/${review._id}/retry-alert`);
+      setAlertState(data.review);
+      toast.success(data.review.alertStatus === 'accepted' ? 'WhatsApp alert accepted by Twilio' : 'Alert retry processed');
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not retry alert'); }
+    finally { setRetryingAlert(false); }
+  };
+  const isDemo = review.source === 'demo';
+  const qualifiesForAlert = Number.isInteger(selectedBusiness?.alertOnRating) && review.rating <= selectedBusiness.alertOnRating;
   const statusColors = {
     pending:   'badge-yellow',
     approved:  'badge-blue',
     posted:    'badge-green',
+    posting:   'badge-blue',
     dismissed: 'badge-gray',
   };
 
@@ -35,18 +53,18 @@ export default function ReviewCard({ review }) {
   };
 
   return (
-    <div className={`card p-5 transition-all ${isBad && review.replyStatus === 'pending' ? 'border-red-100 bg-red-50/30' : ''}`}>
+    <div className={`card min-w-0 p-4 sm:p-5 [overflow-wrap:anywhere] transition-all ${qualifiesForAlert && review.replyStatus === 'pending' ? 'border-negative/25 bg-negative-soft/30' : ''}`}>
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-gray-600 text-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="w-9 h-9 bg-raised rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-secondary text-sm">
             {review.reviewerName?.charAt(0).toUpperCase() || '?'}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">{review.reviewerName}</p>
-            <div className="flex items-center gap-2 mt-0.5">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">{review.reviewerName}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-0.5">
               <StarRating rating={review.rating} />
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-muted">
                 {new Date(review.reviewDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
               </span>
             </div>
@@ -57,17 +75,26 @@ export default function ReviewCard({ review }) {
 
       {/* Review text */}
       {review.comment && (
-        <p className="text-sm text-gray-700 mb-4 leading-relaxed bg-gray-50 rounded-lg px-3 py-2.5">
-          "{review.comment}"
+        <p className="text-sm text-secondary mb-4 leading-relaxed bg-canvas rounded-lg px-3 py-2.5">
+          &quot;{review.comment}&quot;
         </p>
       )}
 
-      {/* AI Reply section — only for bad reviews that are pending */}
-      {isBad && review.replyStatus === 'pending' && (
-        <div className="border-t border-gray-100 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🤖 AI suggested reply</span>
-            <button onClick={handleRegenerate} disabled={regenerating} className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 disabled:opacity-50">
+      {alertState.alertStatus === 'simulated' && <p className="text-xs text-caution mb-3">{alertState.alertPreview}</p>}
+      {alertState.alertStatus === 'accepted' && <p className="text-xs text-positive mb-3">WhatsApp alert accepted by Twilio. Delivery can be checked in Twilio message logs.</p>}
+      {alertState.alertStatus === 'failed' && <div className="text-xs text-negative mb-3">
+        <p>{alertState.alertError} Attempt {alertState.alertAttemptCount} of 5.</p>
+        <button className="underline mt-1" disabled={retryingAlert} onClick={retryAlert}>{retryingAlert ? 'Retrying…' : 'Retry WhatsApp alert'}</button>
+      </div>}
+      {review.aiReplyError && <p className="text-xs text-caution mb-3">{review.aiReplyError}</p>}
+      {review.replyError && <p role="alert" className="text-xs text-negative mb-3">{review.replyError}</p>}
+      {review.replyStatus === 'posting' && <p className="text-sm text-accent">Posting your approved reply. Refresh to check the result.</p>}
+      {/* AI drafts are posted only after the owner approves the text. */}
+      {(qualifiesForAlert || review.replyStatus === 'approved') && ['pending', 'approved'].includes(review.replyStatus) && (
+        <div className="border-t border-line pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span className="eyebrow">AI suggested reply</span>
+            <button onClick={handleRegenerate} disabled={regenerating} className="text-xs text-accent hover:text-accent flex items-center gap-1 disabled:opacity-50">
               <RefreshCw size={12} className={regenerating ? 'animate-spin' : ''} />
               {regenerating ? 'Generating...' : 'Regenerate'}
             </button>
@@ -78,15 +105,17 @@ export default function ReviewCard({ review }) {
             onChange={(e) => setReply(e.target.value)}
             rows={4}
             className="input-field resize-none text-sm leading-relaxed mb-3"
-            placeholder="AI reply will appear here..."
+            aria-label="Reply to this review"
+            placeholder="Generate an AI draft or write your reply here..."
           />
 
-          <div className="flex gap-2">
+          <p className="text-xs text-muted mb-3">Edit the draft if needed. Approving posts this exact text to Google on your behalf.</p>
+          <div className="flex flex-col sm:flex-row gap-2">
             <button onClick={handleDismiss} className="btn-secondary text-sm px-3 py-2">
               <X size={14} /> Dismiss
             </button>
             <button onClick={handlePost} disabled={posting || !reply.trim()} className="btn-primary flex-1 justify-center text-sm py-2">
-              {posting ? <><Loader2 size={14} className="animate-spin" /> Posting to Google...</> : <><Send size={14} /> Post Reply to Google</>}
+              {posting ? <><Loader2 size={14} className="animate-spin" /> {isDemo ? 'Saving demo reply...' : 'Posting to Google...'}</> : <><Send size={14} /> {isDemo ? 'Save demo reply locally' : 'Approve & post to Google'}</>}
             </button>
           </div>
         </div>
@@ -94,13 +123,13 @@ export default function ReviewCard({ review }) {
 
       {/* Show posted reply */}
       {review.replyStatus === 'posted' && review.finalReply && (
-        <div className="border-t border-gray-100 pt-3">
-          <button onClick={() => setExpanded(!expanded)} className="text-xs text-gray-400 flex items-center gap-1 hover:text-gray-600">
+        <div className="border-t border-line pt-3">
+          <button onClick={() => setExpanded(!expanded)} className="text-xs text-muted flex items-center gap-1 hover:text-secondary">
             {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            {expanded ? 'Hide reply' : 'View posted reply'}
+            {expanded ? 'Hide reply' : isDemo ? 'View local demo reply' : 'View posted reply'}
           </button>
           {expanded && (
-            <p className="mt-2 text-sm text-gray-600 bg-green-50 rounded-lg px-3 py-2.5 leading-relaxed">
+            <p className="mt-2 text-sm text-secondary bg-positive-soft rounded-lg px-3 py-2.5 leading-relaxed">
               {review.finalReply}
             </p>
           )}

@@ -1,12 +1,14 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
+import { publicUser } from '../utils/publicUser.js';
 import logger from '../utils/logger.js';
 // @desc    Register new user
 // @route   POST /api/auth/register
 // @access  Public
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, password, phone } = req.body;
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
 
     if (!name || !email || !password || !phone) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
@@ -21,19 +23,12 @@ const register = async (req, res, next) => {
 
     const token = generateToken(user._id);
 
-    logger.info(`New user registered: ${email}`);
+    logger.info(`New user registered: ${user._id}`);
 
     res.status(201).json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        plan: user.plan,
-        trialEndsAt: user.trialEndsAt,
-      },
+      user: publicUser(user),
     });
   } catch (error) {
     next(error);
@@ -45,7 +40,8 @@ const register = async (req, res, next) => {
 // @access  Public
 const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
 
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
@@ -61,21 +57,15 @@ const login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
+    if (!user.isActive) return res.status(401).json({ success: false, message: 'Account is deactivated' });
     const token = generateToken(user._id);
 
-    logger.info(`User logged in: ${email}`);
+    logger.info(`User logged in: ${user._id}`);
 
     res.json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        plan: user.plan,
-        trialEndsAt: user.trialEndsAt,
-      },
+      user: publicUser(user),
     });
   } catch (error) {
     next(error);
@@ -90,14 +80,7 @@ const getMe = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     res.json({
       success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        plan: user.plan,
-        trialEndsAt: user.trialEndsAt,
-      },
+      user: publicUser(user),
     });
   } catch (error) {
     next(error);

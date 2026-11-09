@@ -1,6 +1,8 @@
 import express from 'express';
 import {
   getReviews,
+  retryAlert,
+  simulateReview,
   getStats,
   regenerateReply,
   postReply,
@@ -16,6 +18,8 @@ router.use(checkSubscription); // 2. Apply globally to all review endpoints
 
 router.get('/:businessId', getReviews);
 router.get('/:businessId/stats', getStats);
+router.post('/:businessId/demo-review', simulateReview);
+router.post('/:reviewId/retry-alert', retryAlert);
 router.post('/:reviewId/regenerate', regenerateReply);
 router.post('/:reviewId/post-reply', postReply);
 router.put('/:reviewId/dismiss', dismissReview);

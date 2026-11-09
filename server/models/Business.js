@@ -14,15 +14,17 @@ const businessSchema = new mongoose.Schema(
     },
     googlePlaceId: {
       type: String,
-      required: [true, 'Google Place ID is required'],
+      // Legacy identifier; draft businesses use an internal unique placeholder.
       unique: true,
     },
     googleAccessToken: {
       type: String,
+      select: false,
       default: null,
     },
     googleRefreshToken: {
       type: String,
+      select: false,
       default: null,
     },
     googleAccountId: {
@@ -33,6 +35,14 @@ const businessSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    googleTokenExpiry: Date,
+    googleConnected: { type: Boolean, default: false },
+    googleAuthorized: { type: Boolean, default: false },
+    googleResourceName: { type: String, unique: true, sparse: true },
+    googleOAuthStateHash: { type: String, select: false },
+    googleOAuthExpiresAt: { type: Date, select: false },
+    isDemo: { type: Boolean, default: false },
+    reviewsSynced: { type: Boolean, default: false },
     alertPhone: {
       type: String,
       required: [true, 'Alert phone number is required'],
@@ -43,7 +53,10 @@ const businessSchema = new mongoose.Schema(
     },
     alertOnRating: {
       type: Number,
-      default: 3, // alert if rating is 3 or below
+      min: 1,
+      max: 5,
+      validate: { validator: Number.isInteger, message: 'Alert threshold must be a whole number from 1 to 5' },
+      default: 3, // Initial default; each owner can select any integer from 1 to 5.
     },
     autoReplyEnabled: {
       type: Boolean,
@@ -68,6 +81,11 @@ const businessSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+businessSchema.set('toJSON', { transform(_doc, ret) {
+  for (const field of ['googleAccessToken', 'googleRefreshToken', 'googleOAuthStateHash', 'googleOAuthExpiresAt']) delete ret[field];
+  return ret;
+} });
 
 const Business = mongoose.model('Business', businessSchema);
 export default Business;

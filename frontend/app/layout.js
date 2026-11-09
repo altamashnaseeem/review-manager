@@ -4,18 +4,22 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../context/AuthContext';
 import { BusinessProvider } from '../context/BusinessContext';
 import { ReviewProvider } from '../context/ReviewContext';
+import { ThemeProvider } from '../context/ThemeContext';
+import { themeBootstrap } from '../lib/theme';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata = {
   title: 'RepliQ — Protect Your Business Reputation',
-  description: 'Monitor Google reviews, get instant alerts, and reply with AI-generated responses.',
+  description: 'Monitor Google reviews, receive WhatsApp alerts, and approve thoughtful AI-assisted replies.',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeBootstrap }} /></head>
+      <body className={`${inter.variable} font-sans`}>
+        <ThemeProvider>
         <AuthProvider>
           <BusinessProvider>
             <ReviewProvider>
@@ -24,14 +28,15 @@ export default function RootLayout({ children }) {
                 position="top-right"
                 toastOptions={{
                   duration: 4000,
-                  style: { background: '#1e293b', color: '#f8fafc', fontSize: '14px', borderRadius: '10px' },
-                  success: { iconTheme: { primary: '#22c55e', secondary: '#f8fafc' } },
-                  error: { iconTheme: { primary: '#f43f5e', secondary: '#f8fafc' } },
+                  style: { background: 'rgb(var(--raised))', color: 'rgb(var(--ink))', border: '1px solid rgb(var(--line))', fontSize: '14px', borderRadius: '10px' },
+                  success: { iconTheme: { primary: 'rgb(var(--success))', secondary: 'rgb(var(--surface))' } },
+                  error: { iconTheme: { primary: 'rgb(var(--danger))', secondary: 'rgb(var(--surface))' } },
                 }}
               />
             </ReviewProvider>
           </BusinessProvider>
         </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
