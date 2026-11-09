@@ -12,6 +12,7 @@ Object.assign(process.env, {
   RAZORPAY_PLAN_MONTHLY_ID: 'plan_monthly', RAZORPAY_PLAN_QUARTERLY_ID: 'plan_quarterly', RAZORPAY_PLAN_SEMI_ANNUAL_ID: 'plan_semi',
 });
 const { default: app } = await import('../app.js');
+const { default: BillingSubscription } = await import('../models/BillingSubscription.js');
 const { default: User } = await import('../models/User.js');
 const { default: Business } = await import('../models/Business.js');
 const { default: Review } = await import('../models/Review.js');
@@ -32,13 +33,14 @@ async function call(path, { token = owner?.token, method = 'GET', body, headers:
 }
 const sign = (body, secret) => createHmac('sha256', secret).update(body).digest('hex');
 before(async () => {
-  mongo = await MongoMemoryServer.create(); await mongoose.connect(mongo.getUri());
+  mongo = await MongoMemoryServer.create(); await mongoose.connect(mongo.getUri()); await BillingSubscription.init();
   server = app.listen(0, '127.0.0.1'); await new Promise(resolve => server.once('listening', resolve)); base = `http://127.0.0.1:${server.address().port}`;
   const create = async name => (await call('/auth/register', { token: null, method: 'POST', body: { name, email: `${name}@deploy.example`, phone: '+15555555555', password: 'test-password123' } })).data;
   owner = await create('owner'); other = await create('other');
+  mock.method(billingApi, 'fetchPlan', async id => ({ id, period: 'monthly', interval: { plan_monthly: 1, plan_quarterly: 3, plan_semi: 6 }[id], item: { amount: { plan_monthly: 99900, plan_quarterly: 269700, plan_semi: 479400 }[id], currency: 'INR' } }));
   mock.method(billingApi, 'createSubscription', async options => {
     creates++;
-    const subscription = { id: `sub_${options.notes.userId}`, status: 'created', plan_id: options.plan_id, notes: options.notes, current_end: null };
+    const subscription = { id: `sub_${options.notes.userId}`, status: 'created', plan_id: options.plan_id, notes: options.notes, current_end: null, paid_count: 0 };
     assert.ok(options.start_at > Date.now() / 1000);
     subscriptions.set(subscription.id, subscription);
     return subscription;
@@ -135,7 +137,7 @@ test('deployment configuration, poller schedule, access, and billing', async t =
     subscriptions.get(id).status = 'authenticated';
     const authorized = await call('/checkout/verify', { method: 'POST', body: { ...body, razorpay_signature: signature } });
     assert.equal(authorized.status, 200); assert.equal(authorized.data.user.hasReviewAccess, false);
-    subscriptions.get(id).status = 'active'; subscriptions.get(id).current_end = Math.floor(Date.now() / 1000) + 86400;
+    subscriptions.get(id).status = 'active'; subscriptions.get(id).paid_count = 1; subscriptions.get(id).current_end = Math.floor(Date.now() / 1000) + 86400;
     const verified = await call('/checkout/verify', { method: 'POST', body: { ...body, razorpay_signature: signature } });
     assert.equal(verified.status, 200); assert.equal(verified.data.user.hasReviewAccess, true); assert.equal(verified.data.user.plan, 'monthly');
   });

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Star, Zap, Check, ArrowRight, MessageSquare, AlertTriangle, BarChart3, Menu, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import BillingPlans from '../components/billing/BillingPlans';
 import { openCheckout } from '../lib/checkout';
 import { useRouter } from 'next/navigation';
 
@@ -13,7 +14,6 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(null); 
   const showExpiryModal = !loading && isAuthenticated && user?.hasReviewAccess === false;
-  const [selectedModalPlan, setSelectedModalPlan] = useState('monthly'); // Track chosen option inside modal
   const router = useRouter();
   
   const fadeIn = {
@@ -29,15 +29,18 @@ export default function Home() {
     }
   };
 
-  const handleCheckout = async plan => {
+  const handleCheckout = async (plan, expectedPlanId) => {
     if (!isAuthenticated) { router.push('/register'); return; }
     setPaymentLoading(plan);
     try {
       if (!user?.billingEnabled) throw new Error('Subscriptions are currently unavailable. Please try again later.');
-      await openCheckout(plan);
+      await openCheckout(plan, expectedPlanId);
       await refreshUser();
       router.push('/dashboard');
-    } catch (error) { alert(error.response?.data?.message || error.message || 'Could not start checkout.'); }
+    } catch (error) {
+      await refreshUser().catch(() => {});
+      alert(error.response?.data?.message || error.message || 'Could not start checkout.');
+    }
     finally { setPaymentLoading(null); }
   };
 
@@ -269,94 +272,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Pricing Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-            
-            {/* 1 Month Plan */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between shadow-sm relative hover:shadow-md transition-shadow">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Monthly</h3>
-                <p className="text-slate-400 text-sm mt-1">Flexible month-to-month access</p>
-                <div className="mt-6 flex items-baseline text-slate-900">
-                  <span className="text-4xl font-extrabold tracking-tight">Rs. 999</span>
-                  <span className="ml-1 text-xl font-semibold text-slate-500">/mo</span>
-                </div>
-                <p className="text-xs text-slate-400 mt-2">Billed monthly at Rs.999</p>
-                
-                <ul className="mt-8 space-y-4 text-sm text-slate-600">
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> 7-Day Free Trial</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Unlimited Review Monitoring</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Instant Text & WhatsApp Alerts</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> AI Reply Generation</li>
-                </ul>
-              </div>
-              <button 
-                onClick={() => handleCheckout('monthly')}
-                disabled={paymentLoading !== null}
-                className="mt-8 w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center disabled:opacity-75"
-              >
-                {paymentLoading === 'monthly' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buy'}
-              </button>
-            </div>
-
-            {/* 3 Month Plan */}
-            <div className="bg-white border-2 border-blue-600 rounded-3xl p-8 flex flex-col justify-between shadow-md relative scale-105 md:scale-100 lg:scale-105 hover:shadow-lg transition-shadow">
-              <div className="absolute top-0 right-6 transform -translate-y-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Popular Choice
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">3 Months</h3>
-                <p className="text-slate-400 text-sm mt-1">Perfect stability for growing brands</p>
-                <div className="mt-6 flex items-baseline text-slate-900">
-                  <span className="text-4xl font-extrabold tracking-tight">Rs. 899</span>
-                  <span className="ml-1 text-xl font-semibold text-slate-500">/mo</span>
-                </div>
-                <p className="text-xs text-blue-600 font-medium mt-2">Billed Rs.2697 every 3 months</p>
-                
-                <ul className="mt-8 space-y-4 text-sm text-slate-600">
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> 7-Day Free Trial</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Unlimited Review Monitoring</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Instant Text & WhatsApp Alerts</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-blue-600 inline" /> Priority AI Features</li>
-                </ul>
-              </div>
-              <button 
-                onClick={() => handleCheckout('quarterly')}
-                disabled={paymentLoading !== null}
-                className="mt-8 w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center disabled:opacity-75"
-              >
-                {paymentLoading === 'quarterly' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buy'}
-              </button>
-            </div>
-
-            {/* 6 Month Plan */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between shadow-sm relative hover:shadow-md transition-shadow">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">6 Months</h3>
-                <p className="text-slate-400 text-sm mt-1">Best value infrastructure scaling</p>
-                <div className="mt-6 flex items-baseline text-slate-900">
-                  <span className="text-4xl font-extrabold tracking-tight">Rs. 799</span>
-                  <span className="ml-1 text-xl font-semibold text-slate-500">/mo</span>
-                </div>
-                <p className="text-xs text-green-600 font-medium mt-2">Billed Rs.4794 every 6 months</p>
-                
-                <ul className="mt-8 space-y-4 text-sm text-slate-600">
-                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> 7-Day Free Trial</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> Unlimited Review Monitoring</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> Instant Text & WhatsApp Alerts</li>
-                  <li className="flex items-center gap-3"><Check size={16} className="text-slate-900 inline" /> Max Dedicated API Speed</li>
-                </ul>
-              </div>
-              <button 
-                onClick={() => handleCheckout('semi-annual')}
-                disabled={paymentLoading !== null}
-                className="mt-8 w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center disabled:opacity-75"
-              >
-                {paymentLoading === 'semi-annual' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buy'}
-              </button>
-            </div>
-
-          </div>
+          <BillingPlans busy={paymentLoading !== null} onCheckout={handleCheckout} />
         </div>
       </section>
 

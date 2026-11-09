@@ -155,14 +155,19 @@ existing subscriptions while new checkout is disabled.
 1. In Razorpay test mode, create all three plans. Use keys and plan IDs from the
    same account/mode. Configure `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`,
    `RAZORPAY_PLAN_MONTHLY_ID`, `RAZORPAY_PLAN_QUARTERLY_ID`, and
-   `RAZORPAY_PLAN_SEMI_ANNUAL_ID`.
+   `RAZORPAY_PLAN_SEMI_ANNUAL_ID`. Use three distinct INR plans with period
+   `monthly` and intervals `1`, `3`, and `6`, respectively. Both pricing screens
+   read the actual amounts through `GET /api/billing/plans`; there are no
+   hard-coded fallback prices. Invalid or unavailable plans disable checkout
+   until corrected. Each subscription has a maximum of 12 billing cycles.
 2. Generate a separate random `RAZORPAY_WEBHOOK_SECRET`, then configure a webhook
    at `https://YOUR_BACKEND/api/payments/razorpay/webhook` using that same secret.
 3. Subscribe to the relevant subscription lifecycle events, including
    authenticated, activated, charged, pending, halted, cancelled, and completed.
 4. Set `BILLING_ENABLED=true`. Production configuration now requires the Razorpay
    values and webhook secret. Test checkout, initial authorization, activation,
-   paid-period expiry, a failed charge, cancellation, and webhook retries.
+   paid-period expiry, a failed attempt followed by a successful retry in the
+   same checkout, cancellation, and webhook retries.
 5. For public paid launch, switch to live keys/plan IDs and configure the live-mode
    webhook. Authentication of a future subscription is not an immediate paid
    entitlement; active verified status and an unexpired paid period are needed.
@@ -171,14 +176,30 @@ Checkout is authenticated and bound to the logged-in user. Payment callbacks
 are HMAC-verified using the server-stored subscription ID, then the server fetches
 the current subscription from Razorpay. Signed webhooks also fetch current
 provider state rather than applying stale event payloads, so replays/out-of-order
-events do not restore expired access. Callback success alone never grants access.
+events do not restore expired access. Callback success alone never grants access;
+the provider must report at least one paid charge and a future paid-period end.
+
+Paid access is stored separately from an unfinished checkout. Creating or
+authorizing a new subscription preserves the remaining verified paid time and
+sets the new subscription's start after it. Reopening the same unfinished plan
+reuses its subscription. Choosing another plan cancels the old unpaid checkout
+and confirms its cancellation before creating a replacement. Already authorized
+subscriptions cannot be replaced through this flow.
+
+The `BillingSubscription` collection retains ownership of old provider IDs so
+late callbacks and webhooks can still be verified after replacement. Backend
+startup creates its unique provider-ID index before serving requests; the MongoDB
+user needs index-creation permission. Existing linked subscriptions are adopted
+when reconciled; no destructive database migration is needed. If an older app
+version already overwrote a paid subscription ID, an administrator must reconcile
+the original provider ID with its owner before that lost history can be recovered.
 
 Cancelled subscriptions retain access only until their verified paid-through
 date. Existing paid labels without verified provider status and expiry do not
 grant access. Reconcile a linked legacy subscription through the authenticated
 `POST /api/checkout/status` endpoint; the **Refresh subscription status** button is
-available once the account has a known subscription status. Changes
-or cancellation of subscriptions currently require administration in Razorpay;
+available once the account has a linked subscription. Changes
+or cancellation of authorized subscriptions currently require administration in Razorpay;
 this version does not provide a self-service cancellation page.
 
 ## Required staging acceptance checks

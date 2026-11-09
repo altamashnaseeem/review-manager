@@ -22,6 +22,7 @@ import { useBusiness } from '../../context/BusinessContext';
 import { useReview } from '../../context/ReviewContext';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import BillingPlans from '../../components/billing/BillingPlans';
 import { openCheckout, refreshSubscriptionStatus } from '../../lib/checkout';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
@@ -47,7 +48,6 @@ export default function DashboardPage() {
   // Modal & Selection States
   const [showAddBusiness, setShowAddBusiness] = useState(false);
   const showExpiryModal = user?.hasReviewAccess === false;
-  const [selectedModalPlan, setSelectedModalPlan] = useState('monthly');
   const [paymentLoading, setPaymentLoading] = useState(null);
   
 
@@ -57,14 +57,17 @@ export default function DashboardPage() {
     }
   }, [selectedBusiness, showExpiryModal, user?.hasReviewAccess, fetchStats]);
 
-  const handleCheckout = async plan => {
+  const handleCheckout = async (plan, expectedPlanId) => {
     setPaymentLoading(plan);
     try {
       if (!user?.billingEnabled) throw new Error('Subscriptions are currently unavailable. Please try again later.');
-      const result = await openCheckout(plan);
+      const result = await openCheckout(plan, expectedPlanId);
       await refreshUser();
       toast.success(result.message);
-    } catch (error) { toast.error(error.response?.data?.message || error.message || 'Could not start checkout.'); }
+    } catch (error) {
+      await refreshUser().catch(() => {});
+      toast.error(error.response?.data?.message || error.message || 'Could not start checkout.');
+    }
     finally { setPaymentLoading(null); }
   };
 
@@ -197,7 +200,7 @@ export default function DashboardPage() {
       {/* 3. YOUR DESIGNED SUBSCRIPTION OVERLAY INTEGRATED HERE */}
       {showExpiryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-100 text-center relative overflow-hidden">
+          <div className="bg-white rounded-3xl p-8 max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl border border-slate-100 text-center relative">
             <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 to-amber-500" />
             
             <div className="mx-auto w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4 mt-2">
@@ -209,115 +212,12 @@ export default function DashboardPage() {
             </h2>
             
             <p className="text-slate-500 text-sm mt-2 leading-relaxed">
-              Your trial timeline has concluded. Choose a package option below to instantly restore real-time review updates and AI workflows.
+              Your access period has ended. Choose a subscription below or refresh the status of an existing payment.
             </p>
 
-            {/* Interactive Selector Layout for all 3 Tiers */}
-            <div className="flex flex-col gap-2.5 my-6 text-left">
-              
-              {/* Monthly Option Button */}
-              <button
-                type="button"
-                onClick={() => setSelectedModalPlan('monthly')}
-                className={`w-full p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
-                  selectedModalPlan === 'monthly'
-                    ? 'border-blue-600 bg-blue-50/40 ring-2 ring-blue-600/20'
-                    : 'border-slate-200 bg-white hover:bg-slate-50/80'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                    selectedModalPlan === 'monthly' ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'
-                  }`}>
-                    {selectedModalPlan === 'monthly' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-800 text-sm">Monthly Plan</div>
-                    <div className="text-xs text-slate-400">Billed month-to-month</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-slate-900 text-base">Rs. 1000</span>
-                  <span className="text-xs text-slate-400">/mo</span>
-                </div>
-              </button>
-
-              {/* Quarterly Option Button */}
-              <button
-                type="button"
-                onClick={() => setSelectedModalPlan('quarterly')}
-                className={`w-full p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer relative ${
-                  selectedModalPlan === 'quarterly'
-                    ? 'border-blue-600 bg-blue-50/40 ring-2 ring-blue-600/20'
-                    : 'border-slate-200 bg-white hover:bg-slate-50/80'
-                }`}
-              >
-                <div className="absolute -top-2 right-4 bg-blue-600 text-white font-bold text-[10px] tracking-wide px-2 py-0.5 rounded-full uppercase">
-                  Save 10%
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                    selectedModalPlan === 'quarterly' ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'
-                  }`}>
-                    {selectedModalPlan === 'quarterly' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-800 text-sm">3 Months Plan</div>
-                    <div className="text-xs text-blue-600 font-medium">Rs. 2700 billed upfront</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-slate-900 text-base">Rs. 900</span>
-                  <span className="text-xs text-slate-400">/mo</span>
-                </div>
-              </button>
-
-              {/* Semi-Annual Option Button */}
-              <button
-                type="button"
-                onClick={() => setSelectedModalPlan('semi-annual')}
-                className={`w-full p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer relative ${
-                  selectedModalPlan === 'semi-annual'
-                    ? 'border-blue-600 bg-blue-50/40 ring-2 ring-blue-600/20'
-                    : 'border-slate-200 bg-white hover:bg-slate-50/80'
-                }`}
-              >
-                <div className="absolute -top-2 right-4 bg-emerald-600 text-white font-bold text-[10px] tracking-wide px-2 py-0.5 rounded-full uppercase">
-                  Save 20%
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                    selectedModalPlan === 'semi-annual' ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'
-                  }`}>
-                    {selectedModalPlan === 'semi-annual' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-800 text-sm">6 Months Plan</div>
-                    <div className="text-xs text-emerald-600 font-medium">Rs. 4800 billed upfront</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-slate-900 text-base">Rs. 800</span>
-                  <span className="text-xs text-slate-400">/mo</span>
-                </div>
-              </button>
-
-            </div>
-
+            <div className="my-6"><BillingPlans layout="selector" busy={paymentLoading !== null} onCheckout={handleCheckout} checkoutLabel="Reactivate Account Tier" /></div>
             <div className="flex flex-col gap-3">
-              <button
-                onClick={() => handleCheckout(selectedModalPlan)}
-                disabled={paymentLoading !== null}
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-75 transition-colors text-white font-semibold rounded-xl text-sm shadow-md flex items-center justify-center gap-2"
-              >
-                {paymentLoading === selectedModalPlan ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>Reactivate Account Tier</>
-                )}
-              </button>
-               
-              {user?.billingEnabled && user?.subscriptionStatus && <button onClick={refreshSubscription} disabled={paymentLoading !== null} className="btn-secondary justify-center">Refresh subscription status</button>}
+              {user?.hasSubscription && <button onClick={refreshSubscription} disabled={paymentLoading !== null} className="btn-secondary justify-center">Refresh subscription status</button>}
               <button 
                 onClick={() => {
                   logout?.();

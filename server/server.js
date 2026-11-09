@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import app from './app.js';
+import BillingSubscription from './models/BillingSubscription.js';
 import connectDB from './config/db.js';
 import { validateEnvironment } from './config/environment.js';
 import { startReviewPoller } from './jobs/reviewPoller.js';
@@ -23,6 +24,7 @@ for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => shutdown(si
 try {
   const config = validateEnvironment();
   await connectDB();
+  await BillingSubscription.createIndexes();
   server = app.listen(config.port, '0.0.0.0', () => {
     logger.info(`Server listening on port ${config.port}`);
     if (config.runPoller) poller = startReviewPoller();
