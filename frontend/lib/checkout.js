@@ -24,7 +24,7 @@ export async function openCheckout(plan, expectedPlanId) {
     };
     const checkout = new window.Razorpay({
       key: data.razorpayKeyId, subscription_id: data.subscriptionId, name: 'RepliQ', description: `${plan} subscription`,
-      prefill: { name: data.name, email: data.email, contact: data.phone }, theme: { color: '#2563eb' },
+      prefill: { name: data.name, email: data.email, contact: data.phone }, theme: { color: '#5257d3' },
       modal: { ondismiss: () => {
         if (!verifying) finish(new Error(failedAttempt ? 'Payment did not complete. Check its status before retrying.' : 'Checkout was closed.'));
       } },

@@ -62,20 +62,21 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
 
   return (
     <AppLayout>
-      <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+      <div className="workspace-content max-w-3xl">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Manage your account and business preferences</p>
+          <p className="eyebrow mb-3">03 / Your preferences</p>
+            <h1 className="page-heading">Settings</h1>
+          <p className="text-muted text-sm mt-0.5">Manage your account and business preferences</p>
         </div>
 
         {/* Tabs */}
-        <div className="grid grid-cols-3 sm:flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-full sm:w-fit">
+        <div className="grid grid-cols-3 sm:flex gap-1 bg-raised p-1 rounded-xl mb-6 w-full sm:w-fit">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
               aria-pressed={activeTab === id}
-              className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${activeTab === id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${activeTab === id ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-secondary'}`}
             >
               <Icon size={15} /> {label}
             </button>
@@ -85,30 +86,30 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="card p-4 sm:p-6">
-            <h2 className="font-semibold text-gray-900 mb-5">Your profile</h2>
+            <h2 className="font-semibold text-ink mb-5">Your profile</h2>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 shrink-0 bg-blue-600 rounded-2xl flex items-center justify-center">
+              <div className="w-14 h-14 shrink-0 bg-action rounded-2xl flex items-center justify-center">
                 <span className="text-white text-xl font-bold">{user?.name?.charAt(0).toUpperCase()}</span>
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{user?.name}</p>
-                <p className="break-all text-sm text-gray-500">{user?.email}</p>
-                <span className={`mt-1 inline-block text-xs px-2 py-0.5 rounded-full font-medium ${user?.plan === 'trial' ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'}`}>
+                <p className="font-semibold text-ink">{user?.name}</p>
+                <p className="break-all text-sm text-muted">{user?.email}</p>
+                <span className={`mt-1 inline-block text-xs px-2 py-0.5 rounded-full font-medium ${user?.plan === 'trial' ? 'bg-caution-soft text-caution' : 'bg-positive-soft text-positive'}`}>
                   {user?.plan === 'trial' ? `Trial — ends ${new Date(user?.trialEndsAt).toLocaleDateString('en-IN')}` : user?.plan + ' plan'}
                 </span>
               </div>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+                <label className="block text-sm font-medium text-secondary mb-1">Full name</label>
                 <input defaultValue={user?.name} className="input-field" readOnly />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-secondary mb-1">Email</label>
                 <input defaultValue={user?.email} className="input-field" readOnly />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label className="block text-sm font-medium text-secondary mb-1">Phone</label>
                 <input defaultValue={user?.phone} className="input-field" readOnly />
               </div>
             </div>
@@ -118,15 +119,15 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
         {/* Business Settings Tab */}
         {activeTab === 'business' && (
           <div className="card p-4 sm:p-6">
-            <h2 className="font-semibold text-gray-900 mb-5">
+            <h2 className="font-semibold text-ink mb-5">
               {selectedBusiness ? `Settings for ${selectedBusiness.name}` : 'No business selected'}
             </h2>
             {!selectedBusiness ? (
-              <p className="text-gray-500 text-sm">Select a business from the sidebar to manage its settings.</p>
+              <p className="text-muted text-sm">Select a business from the sidebar to manage its settings.</p>
             ) : (
               <form onSubmit={handleBizUpdate} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp alert number</label>
+                  <label className="block text-sm font-medium text-secondary mb-1.5">WhatsApp alert number</label>
                   <input
                     type="tel" value={bizForm.alertPhone}
                     onChange={(e) => setBizForm({ ...bizForm, alertPhone: e.target.value })}
@@ -134,7 +135,7 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Alert email</label>
+                  <label className="block text-sm font-medium text-secondary mb-1.5">Alert email</label>
                   <input
                     type="email" value={bizForm.alertEmail}
                     onChange={(e) => setBizForm({ ...bizForm, alertEmail: e.target.value })}
@@ -142,16 +143,16 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="block text-sm font-medium text-secondary mb-1.5">
                     Alert when rating ≤ {bizForm.alertOnRating} stars
                   </label>
                   <input
                     type="range" min="1" max="5" value={bizForm.alertOnRating}
                     onChange={(e) => setBizForm({ ...bizForm, alertOnRating: Number(e.target.value) })}
-                    className="w-full accent-blue-600"
+                    className="w-full accent-accent"
                   />
                 </div>
-                <p className="text-sm text-gray-600 p-4 bg-gray-50 rounded-xl">New reviews at or below your threshold trigger a WhatsApp alert and an AI draft. You approve the reply before it is posted to Google.</p>
+                <p className="text-sm text-secondary p-4 bg-canvas rounded-xl">New reviews at or below your threshold trigger a WhatsApp alert and an AI draft. You approve the reply before it is posted to Google.</p>
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button type="submit" disabled={loading} className="btn-primary">
                     {loading ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : <><Save size={14} /> Save changes</>}
@@ -160,21 +161,21 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
                     <Trash2 size={14} /> Remove Business
                   </button>
                 </div>
-                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="mt-4 p-4 bg-canvas rounded-xl border border-line">
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div className="min-w-0">
-      <p className="text-sm font-medium text-gray-900">Google Business Account</p>
-      <p className="text-xs text-gray-500 mt-0.5">
-        {selectedBusiness?.googleConnected
-          ? '✅ Connected — can post replies directly to Google'
-          : '❌ Not connected — connect to fetch reviews and post replies'}
+      <p className="text-sm font-medium text-ink">Google Business Account</p>
+      <p className="text-xs text-muted mt-0.5">
+        {selectedBusiness?.isDemo ? 'Development demo — replies stay local.' : selectedBusiness?.googleConnected
+          ? 'Connected — Google reviews and replies available.'
+          : 'Connect Google to import reviews and post replies.'}
       </p>
     </div>
     <button
       type="button"
       onClick={handleConnectGoogle}
       disabled={connecting}
-      className={`btn-primary sm:shrink-0 text-sm ${selectedBusiness?.googleConnected ? 'bg-green-600 hover:bg-green-700' : ''}`}
+      className="btn-secondary sm:shrink-0 text-sm"
     >
       {connecting
         ? 'Redirecting...'
@@ -192,10 +193,10 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
         {/* Security Tab */}
         {activeTab === 'security' && (
           <div className="card p-4 sm:p-6">
-            <h2 className="font-semibold text-gray-900 mb-5">Change password</h2>
+            <h2 className="font-semibold text-ink mb-5">Change password</h2>
             <form onSubmit={handlePasswordUpdate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Current password</label>
+                <label className="block text-sm font-medium text-secondary mb-1.5">Current password</label>
                 <input
                   type="password" required value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
@@ -203,7 +204,7 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">New password</label>
+                <label className="block text-sm font-medium text-secondary mb-1.5">New password</label>
                 <input
                   type="password" required value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
@@ -211,7 +212,7 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm new password</label>
+                <label className="block text-sm font-medium text-secondary mb-1.5">Confirm new password</label>
                 <input
                   type="password" required value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}

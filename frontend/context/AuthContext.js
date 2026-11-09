@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       dispatch({ type: 'LOGIN_SUCCESS', payload: { token: data.token, user: data.user } });
-      toast.success('Account created! Welcome to ReviewManager.');
+      toast.success('Account created! Welcome to RepliQ.');
       return { success: true };
     } catch (error) {
       const msg = error.response?.data?.message || 'Registration failed';

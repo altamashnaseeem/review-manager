@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Star, Eye, EyeOff, Loader2 } from 'lucide-react';
+import AuthShell from '../../components/layout/AuthShell';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { loginDestination } from '../../lib/reviewNavigation';
 import { useAuth } from '../../context/AuthContext';
 
@@ -26,22 +27,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-8 sm:py-12">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-200">
-            <Star size={28} className="text-white fill-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="text-gray-500 mt-1 text-sm">Sign in to manage your reviews</p>
-        </div>
-
-        {/* Form */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 border border-gray-100 p-5 sm:p-8">
+    <AuthShell title="Welcome back" description="Sign in to manage your reviews.">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+              <label className="block text-sm font-medium text-secondary mb-1.5">Email address</label>
               <input
                 type="email"
                 required
@@ -53,7 +42,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-secondary mb-1.5">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -67,7 +56,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center text-gray-400 hover:text-gray-600"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center text-muted hover:text-secondary"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -79,12 +68,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <p className="text-center text-sm text-muted mt-6">
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-blue-600 font-medium hover:underline">Create one free</Link>
+            <Link href="/register" className="text-accent font-medium hover:underline">Create one free</Link>
           </p>
-        </div>
-      </div>
-    </div>
+
+    </AuthShell>
   );
 }

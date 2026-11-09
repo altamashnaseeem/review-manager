@@ -27,7 +27,7 @@ export default function AddBusinessModal({ isOpen, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose} title="Add your business" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Business name</label>
+          <label className="block text-sm font-medium text-secondary mb-1.5">Business name</label>
           <input
             type="text" required value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -36,7 +36,7 @@ export default function AddBusinessModal({ isOpen, onClose }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp alert number</label>
+          <label className="block text-sm font-medium text-secondary mb-1.5">WhatsApp alert number</label>
           <input
             type="tel" required value={form.alertPhone}
             onChange={(e) => setForm({ ...form, alertPhone: e.target.value })}
@@ -45,7 +45,7 @@ export default function AddBusinessModal({ isOpen, onClose }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Alert email (optional)</label>
+          <label className="block text-sm font-medium text-secondary mb-1.5">Alert email (optional)</label>
           <input
             type="email" value={form.alertEmail}
             onChange={(e) => setForm({ ...form, alertEmail: e.target.value })}
@@ -54,16 +54,16 @@ export default function AddBusinessModal({ isOpen, onClose }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-secondary mb-1.5">
             Alert me when rating is {form.alertOnRating} stars or below
           </label>
           <input
             type="range" min="1" max="5" value={form.alertOnRating}
             onChange={(e) => setForm({ ...form, alertOnRating: Number(e.target.value) })}
             aria-label="Alert rating threshold"
-            className="w-full h-8 accent-blue-600"
+            className="w-full h-8 accent-accent"
           />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <div className="flex justify-between text-xs text-muted mt-1">
             <span>1 ★</span><span>2 ★</span><span>3 ★</span><span>4 ★</span><span>5 ★</span>
           </div>
         </div>

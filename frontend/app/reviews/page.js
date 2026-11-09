@@ -87,12 +87,13 @@ export default function ReviewsPage() {
 
   return (
     <AppLayout>
-      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+      <div className="workspace-content max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Reviews</h1>
-            <p className="text-gray-500 text-sm mt-0.5">
+            <p className="eyebrow mb-3">02 / The conversation</p>
+            <h1 className="page-heading">Reviews</h1>
+            <p className="text-muted text-sm mt-0.5">
               {selectedBusiness
                 ? `${total} reviews for ${selectedBusiness.name}`
                 : 'Select a business first'}
@@ -100,8 +101,8 @@ export default function ReviewsPage() {
           </div>
         </div>
 
-        {linkError && <p role="alert" className="text-red-700 mb-4">{linkError}</p>}
-        {linkedReview && <div className="mb-4 text-sm text-gray-600">Review opened from your alert. <button className="text-blue-600 underline" onClick={clearLink}>Show all reviews</button></div>}
+        {linkError && <p role="alert" className="text-negative mb-4">{linkError}</p>}
+        {linkedReview && <div className="mb-4 text-sm text-secondary">Review opened from your alert. <button className="text-accent underline" onClick={clearLink}>Show all reviews</button></div>}
         <DemoReviewForm onCreated={() => { clearLink(); setStatusFilter(''); setRatingFilter(''); }} />
         {/* No business */}
         {businesses.length === 0 && (
@@ -124,7 +125,7 @@ export default function ReviewsPage() {
             {/* Filters */}
             <div className="flex flex-wrap gap-3 mb-5">
               {/* Status filter buttons */}
-              <div role="group" aria-label="Review status" className="grid w-full grid-cols-2 sm:flex sm:w-auto items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+              <div role="group" aria-label="Review status" className="grid w-full grid-cols-2 sm:flex sm:w-auto items-center gap-1 bg-surface border border-line rounded-lg p-1">
                 {FILTERS.map((f) => (
                   <button
                     key={f.value}
@@ -132,8 +133,8 @@ export default function ReviewsPage() {
                     aria-pressed={statusFilter === f.value}
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                       statusFilter === f.value
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-action text-white'
+                        : 'text-secondary hover:bg-canvas'
                     }`}
                   >
                     {f.value === 'pending' ? `Needs reply (≤${selectedBusiness.alertOnRating}★)` : f.label}
@@ -159,7 +160,7 @@ export default function ReviewsPage() {
             {/* Active filter indicator */}
             {(statusFilter || ratingFilter) && (
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-500">Active filter:</span>
+                <span className="text-xs text-muted">Active filter:</span>
                 {statusFilter && (
                   <span className="badge-blue text-xs">
                     {FILTERS.find(f => f.value === statusFilter)?.label}
@@ -172,7 +173,7 @@ export default function ReviewsPage() {
                 )}
                 <button
                   onClick={() => { setPage(1); setStatusFilter(''); setRatingFilter(''); }}
-                  className="text-xs text-red-500 hover:underline ml-1"
+                  className="text-xs text-negative hover:underline ml-1"
                 >
                   Clear filters
                 </button>
@@ -205,7 +206,7 @@ export default function ReviewsPage() {
             )}
             {pages > 1 && <nav aria-label="Review pagination" className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-between">
               <button className="btn-secondary text-sm" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>Previous page</button>
-              <span className="col-span-2 row-start-1 text-center text-sm text-gray-500">Page {page} of {pages}</span>
+              <span className="col-span-2 row-start-1 text-center text-sm text-muted">Page {page} of {pages}</span>
               <button className="btn-secondary text-sm" disabled={loading || page >= pages} onClick={() => setPage(p => p + 1)}>Next page</button>
             </nav>}
           </>

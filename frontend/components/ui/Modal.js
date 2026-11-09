@@ -35,11 +35,11 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={`relative bg-white rounded-2xl shadow-2xl w-full min-w-0 ${sizes[size]} max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain [overflow-wrap:anywhere]`}>
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-white p-4 sm:p-5 border-b border-gray-100">
-          <h3 id={titleId} className="text-lg font-semibold text-gray-900">{title}</h3>
-          <button aria-label="Close dialog" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={18} className="text-gray-500" />
+      <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={`relative bg-surface border border-line rounded-2xl shadow-2xl w-full min-w-0 ${sizes[size]} max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain [overflow-wrap:anywhere]`}>
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-surface p-4 sm:p-5 border-b border-line">
+          <h3 id={titleId} className="text-lg font-semibold text-ink">{title}</h3>
+          <button aria-label="Close dialog" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center hover:bg-raised rounded-lg transition-colors">
+            <X size={18} className="text-muted" />
           </button>
         </div>
         <div className="p-4 sm:p-5">{children}</div>

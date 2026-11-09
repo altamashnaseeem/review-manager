@@ -2,9 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
+import ThemeToggle from '../../components/ui/ThemeToggle';
+import Brand from '../../components/brand/Brand';
 import AddBusinessModal from '../../components/dashboard/AddBusinessModal';
 import api from '../../lib/axios';
 
@@ -99,13 +101,14 @@ export default function ConnectGooglePage() {
   if (loading || !loaded) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" aria-label="Loading" /></div>;
   if (!isAuthenticated) return null;
   return (
-    <main className="min-h-dvh bg-gray-50 flex items-center justify-center px-4 py-8 sm:p-6">
+    <main className="min-h-dvh bg-canvas flex items-center justify-center px-4 py-8 sm:p-6">
       <div className="card min-w-0 p-5 sm:p-8 w-full max-w-xl [overflow-wrap:anywhere] space-y-5">
-        <Building2 className="text-blue-600" size={32} />
-        <p className="text-sm text-gray-500">Welcome, {user?.name} · Business setup</p>
-        <h1 className="text-xl sm:text-2xl font-bold">Connect your Google Business Profile</h1>
-        <p className="text-gray-600 text-sm">Add your business details, grant Google permission, then choose the location you manage. Your dashboard opens after the reviews sync.</p>
-        {(error || businessError) && <p role="alert" className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error || businessError}</p>}
+        <div className="flex items-center justify-between gap-3 border-b border-line pb-5"><Brand /><ThemeToggle /></div>
+        <p className="eyebrow">Your business, connected.</p>
+        <p className="text-sm text-muted">Welcome, {user?.name} · Business setup</p>
+        <h1 className="text-3xl font-normal tracking-[-0.05em]">Connect your Google Business Profile</h1>
+        <p className="text-secondary text-sm">Add your business details, grant Google permission, then choose the location you manage. Your dashboard opens after the reviews sync.</p>
+        {(error || businessError) && <p role="alert" className="p-3 bg-negative-soft text-negative rounded-lg text-sm">{error || businessError}</p>}
         {businessError && <button className="btn-secondary w-full sm:w-auto" onClick={fetchBusinesses}>Retry loading businesses</button>}
         {businesses.length > 0 && <div>
           <label htmlFor="business" className="block text-sm font-medium mb-2">Your business</label>
@@ -115,9 +118,9 @@ export default function ConnectGooglePage() {
         </div>}
         <button className="btn-secondary w-full sm:w-auto" disabled={busy || !!callback} onClick={() => setShowAdd(true)}>{business ? 'Add another business' : 'Enter business details'}</button>
         {business && <div className="space-y-4 border-t pt-5">
-          {business.isDemo ? <p className="text-sm text-amber-800">Development demo: 125 synthetic reviews. No real Google connection or Google posts.</p> : <button className="btn-primary w-full justify-center" disabled={busy || !!callback} onClick={connect}>{business.googleAuthorized ? 'Reconnect Google Business account' : 'Connect Google Business account'}</button>}
-          {busy && <p role="status" className="text-sm text-gray-500 flex gap-2"><Loader2 size={16} className="animate-spin" /> Connecting or syncing reviews…</p>}
-          {business.googleAuthorized && !business.isDemo && locationsLoaded && locations.length === 0 && <p className="text-sm text-gray-600">No managed locations were found. Sign in with a Google account that owns or manages a real Business Profile, or ask an owner to invite you as a manager. Adding an OAuth test user does not give business access.</p>}
+          {business.isDemo ? <p className="text-sm text-caution">Development demo: 125 synthetic reviews. No real Google connection or Google posts.</p> : <button className="btn-primary w-full justify-center" disabled={busy || !!callback} onClick={connect}>{business.googleAuthorized ? 'Reconnect Google Business account' : 'Connect Google Business account'}</button>}
+          {busy && <p role="status" className="text-sm text-muted flex gap-2"><Loader2 size={16} className="animate-spin" /> Connecting or syncing reviews…</p>}
+          {business.googleAuthorized && !business.isDemo && locationsLoaded && locations.length === 0 && <p className="text-sm text-secondary">No managed locations were found. Sign in with a Google account that owns or manages a real Business Profile, or ask an owner to invite you as a manager. Adding an OAuth test user does not give business access.</p>}
           {locations.length > 0 && <div className="space-y-3">
             <label htmlFor="location" className="block text-sm font-medium">Choose your Google location</label>
             <select id="location" className="input-field" disabled={busy} value={locationKey} onChange={e => setLocationKey(e.target.value)}>
@@ -127,12 +130,12 @@ export default function ConnectGooglePage() {
             <button className="btn-primary w-full sm:w-auto" disabled={busy || !locationKey} onClick={selectLocation}>Sync reviews and open dashboard</button>
           </div>}
           {business.googleConnected && <button className="btn-primary w-full sm:w-auto" disabled={busy || !!callback} onClick={sync}>{business.reviewsSynced ? 'Sync and continue to dashboard' : 'Retry review sync'}</button>}
-          {demoEnabled && !business.googleAuthorized && !business.googleLocationId && <div className="bg-amber-50 p-4 rounded-lg space-y-2">
-            <p className="text-sm text-amber-900">Developer testing without a store: load 125 synthetic reviews. Replies stay local and no alerts are sent.</p>
+          {demoEnabled && !business.googleAuthorized && !business.googleLocationId && <div className="bg-caution-soft p-4 rounded-lg space-y-2">
+            <p className="text-sm text-caution">Developer testing without a store: load 125 synthetic reviews. Replies stay local and no alerts are sent.</p>
             <button className="btn-secondary w-full sm:w-auto" disabled={busy || !!callback} onClick={demo}>Use development demo</button>
           </div>}
         </div>}
-        <div className="flex justify-between text-sm text-gray-500 pt-3"><Link href="/" className="inline-flex min-h-11 items-center">Home</Link><button onClick={logout}>Sign out</button></div>
+        <div className="flex justify-between text-sm text-muted pt-3"><Link href="/" className="inline-flex min-h-11 items-center">Home</Link><button onClick={logout}>Sign out</button></div>
       </div>
       <AddBusinessModal isOpen={showAdd} onClose={() => { setShowAdd(false); setBusinessId(''); }} />
     </main>
