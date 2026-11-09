@@ -23,7 +23,11 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 401;
   }
 
-  logger.error(`${statusCode} - ${message} - ${req.originalUrl}`);
+  if (err.name === 'CastError') { statusCode = 400; message = 'Invalid resource ID'; }
+  if (err.type === 'entity.parse.failed') { statusCode = 400; message = 'Invalid JSON request body'; }
+  if (err.type === 'entity.too.large') { statusCode = 413; message = 'Request body is too large'; }
+  if (process.env.NODE_ENV === 'production' && statusCode >= 500 && !err.statusCode) message = 'Internal Server Error';
+  logger.error(`${statusCode} - ${message} - ${req.path}`);
 
   res.status(statusCode).json({
     success: false,

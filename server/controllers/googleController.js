@@ -5,7 +5,7 @@ import { syncBusinessReviews } from '../services/reviewSync.js';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 const ownedBusiness = req => Business.findOne({ _id: req.params.id, owner: req.user.id });
-const frontendRedirect = (res, values) => res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/connect-google?${new URLSearchParams(values)}`);
+const frontendRedirect = (res, values) => res.redirect(`${(process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '')}/connect-google?${new URLSearchParams(values)}`);
 
 export async function getGoogleAuthUrl(req, res, next) {
   try {

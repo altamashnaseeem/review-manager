@@ -68,7 +68,7 @@ export default function ConnectGooglePage() {
       if (!cancelled) { setLocations(data.locations); setLocationsLoaded(true); }
     }).catch(err => { if (!cancelled) setError(err.response?.data?.message || 'Could not load Google locations.'); });
     return () => { cancelled = true; };
-  }, [business?._id, business?.googleAuthorized, callback, busy]);
+  }, [business?._id, business?.googleAuthorized, business?.isDemo, callback, busy]);
 
   const act = async (action) => {
     setBusy(true); setError('');

@@ -31,8 +31,8 @@ router.route('/:id')
 router.get('/:id/google/connect', getGoogleAuthUrl);
 router.post('/:id/google/complete', completeGoogleConnection);
 router.get('/:id/google/locations', getGoogleLocations);
-router.post('/:id/google/location', selectGoogleLocation);
+router.post('/:id/google/location', checkSubscription, selectGoogleLocation);
 router.post('/:id/google/demo', connectDemo);
-router.post('/:id/google/sync', syncReviews);
+router.post('/:id/google/sync', checkSubscription, syncReviews);
 
 export default router;

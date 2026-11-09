@@ -35,7 +35,7 @@ this setup. A Place ID is no longer required in the business form.
 
 ## Run locally
 
-Use Node.js 20 or newer and MongoDB. In `server`, run `npm ci` then `npm run dev`.
+Use Node.js 22 or 24 and MongoDB. In `server`, run `npm ci` then `npm run dev`.
 In `frontend`, run `npm ci` then `npm run dev`. Open `http://localhost:3000`.
 
 Sign up, enter the business name and alert number, click **Connect Google Business
@@ -146,3 +146,6 @@ Official references:
 - https://developers.google.com/my-business/content/prereqs
 - https://developers.google.com/my-business/reference/rest/v4/accounts.locations.reviews/list
 - https://developers.google.com/my-business/reference/rest/v4/accounts.locations.reviews/updateReply
+
+For production hosting on Render/Railway, configuration checks, and billing, see
+[DEPLOYMENT.md](DEPLOYMENT.md).

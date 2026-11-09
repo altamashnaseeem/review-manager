@@ -98,6 +98,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    const { data } = await api.get('/auth/me');
+    localStorage.setItem('user', JSON.stringify(data.user));
+    dispatch({ type: 'UPDATE_USER', payload: data.user });
+    return data.user;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -118,7 +125,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, updatePassword }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout, updatePassword, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -22,11 +22,12 @@ import { useBusiness } from '../../context/BusinessContext';
 import { useReview } from '../../context/ReviewContext';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import { openCheckout, refreshSubscriptionStatus } from '../../lib/checkout';
 import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth(); // Extracted logout here
+  const { user, logout, refreshUser } = useAuth(); // Extracted logout here
   const { businesses, selectedBusiness, fetchBusinesses, loading: bizLoading } = useBusiness();
   const { stats, fetchStats, loading: reviewLoading } = useReview();
   
@@ -45,79 +46,35 @@ export default function DashboardPage() {
 
   // Modal & Selection States
   const [showAddBusiness, setShowAddBusiness] = useState(false);
-  const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const showExpiryModal = user?.hasReviewAccess === false;
   const [selectedModalPlan, setSelectedModalPlan] = useState('monthly');
   const [paymentLoading, setPaymentLoading] = useState(null);
   
-  // 1. Evaluate trial/plan subscription status
- // 1. Evaluate trial/plan subscription status accurately
-useEffect(() => {
-  if (user) {
-    const now = new Date();
-    const trialExpired = user.trialEndsAt && new Date(user.trialEndsAt) < now;
-    
-    // Check if the user is currently on an active paid plan subscription tier
-    const hasActivePaidPlan = ['monthly', 'quarterly', 'semi-annual'].includes(user.plan);
-    
-    // Only lock the screen if they DON'T have a paid plan AND their trial state is invalid
-    if (!hasActivePaidPlan && (user.plan === 'none' || trialExpired)) {
-      console.log("Access Denied: Suspending UI view");
-      setShowExpiryModal(true);
-    } else {
-      console.log("Access Granted: Clear active dashboard context");
-      setShowExpiryModal(false);
-    }
-  }
-}, [user]);
 
   useEffect(() => {
-    if (selectedBusiness?.googleConnected && selectedBusiness?.reviewsSynced && !showExpiryModal) {
+    if (selectedBusiness?.googleConnected && selectedBusiness?.reviewsSynced && user?.hasReviewAccess !== false && !showExpiryModal) {
       fetchStats(selectedBusiness._id);
     }
-  }, [selectedBusiness, showExpiryModal]);
+  }, [selectedBusiness, showExpiryModal, user?.hasReviewAccess, fetchStats]);
 
-  // 2. Razorpay Checkout Handler Logic
-  const handleCheckout = async (planType) => {
+  const handleCheckout = async plan => {
+    setPaymentLoading(plan);
     try {
-      setPaymentLoading(planType);
-      
-      // Call your checkout session backend route
-      const response = await fetch('/api/checkout/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planType, userId: user?._id }),
-      });
-      
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to initialize payment.');
+      if (!user?.billingEnabled) throw new Error('Subscriptions are currently unavailable. Please try again later.');
+      const result = await openCheckout(plan);
+      await refreshUser();
+      toast.success(result.message);
+    } catch (error) { toast.error(error.response?.data?.message || error.message || 'Could not start checkout.'); }
+    finally { setPaymentLoading(null); }
+  };
 
-      // Initialize Razorpay Checkout
-      const options = {
-        key: data.razorpayKeyId,
-        subscription_id: data.subscriptionId,
-        name: 'RepliQ',
-        description: `${planType.charAt(0).toUpperCase() + planType.slice(1)} Subscription`,
-        prefill: {
-          name: data.name,
-          email: data.email,
-          contact: data.phone,
-        },
-        handler: function (response) {
-          // Handle successful subscription payment client side if needed
-          // Usually window updates or waits for the webhook status update
-          window.location.reload();
-        },
-        theme: { color: '#2563eb' },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-      
-    } catch (err) {
-      alert(err.message || 'Payment integration error occurred.');
-    } finally {
-      setPaymentLoading(null);
-    }
+  const refreshSubscription = async () => {
+    setPaymentLoading('refresh');
+    try {
+      await refreshSubscriptionStatus(); await refreshUser();
+      toast.success('Subscription status refreshed');
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not refresh subscription status'); }
+    finally { setPaymentLoading(null); }
   };
 
   const isLoading = bizLoading || reviewLoading;
@@ -360,10 +317,10 @@ useEffect(() => {
                 )}
               </button>
                
+              {user?.billingEnabled && user?.subscriptionStatus && <button onClick={refreshSubscription} disabled={paymentLoading !== null} className="btn-secondary justify-center">Refresh subscription status</button>}
               <button 
                 onClick={() => {
                   logout?.();
-                  setShowExpiryModal(false);
                 }}
                 className="w-full py-3 bg-transparent hover:bg-slate-50 transition-colors text-slate-500 hover:text-slate-800 font-medium text-sm rounded-xl"
               >

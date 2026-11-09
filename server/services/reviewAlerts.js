@@ -1,4 +1,6 @@
 import Review from '../models/Review.js';
+import User from '../models/User.js';
+import { hasReviewAccess } from './subscriptionAccess.js';
 import Business from '../models/Business.js';
 import { generateReviewReply } from './claudeService.js';
 import { sendWhatsAppAlert } from './twilioService.js';
@@ -17,6 +19,8 @@ export function approvalLink(businessId, reviewId) {
 export async function processReviewAlerts(business, { generateReply = generateReviewReply, sendAlert = sendWhatsAppAlert } = {}) {
   if (!business.isActive || !business.googleConnected || !business.reviewsSynced) return;
   if (business.isDemo && !demoEnabled()) return;
+  const owner = business.owner?.plan ? business.owner : await User.findById(business.owner);
+  if (!hasReviewAccess(owner)) return;
   const now = new Date();
   const candidates = await Review.find({
     ...(business.isDemo && !demoWhatsAppEnabled() ? { demoWhatsAppRequested: { $ne: true } } : {}),

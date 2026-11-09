@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Star, Filter, Search, Building2, Plus } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
 import DemoReviewForm from '../../components/reviews/DemoReviewForm';
@@ -45,7 +45,7 @@ export default function ReviewsPage() {
     const target = businesses.find(b => b._id === linkedReview.businessId);
     if (!target) { setLinkError('This review link does not belong to one of your businesses.'); return; }
     if (target._id !== selectedBusiness?._id) selectBusiness(target);
-  }, [linkedReview, loaded, businesses, selectedBusiness?._id]);
+  }, [linkedReview, loaded, businesses, selectedBusiness?._id, selectBusiness]);
   const clearLink = () => {
     setLinkedReview(null); setLinkError(''); setPage(1);
     window.history.replaceState({}, '', '/reviews');
@@ -53,14 +53,7 @@ export default function ReviewsPage() {
 
   useEffect(() => { setPage(1); }, [selectedBusiness?._id]);
 
-  // This runs whenever business or filters change
-  useEffect(() => {
-    if (selectedBusiness?.googleConnected && selectedBusiness?.reviewsSynced) {
-      if (!linkedReview || linkedReview.businessId === selectedBusiness._id) loadReviews();
-    }
-  }, [selectedBusiness, statusFilter, ratingFilter, page, linkedReview]);
-
-  const loadReviews = () => {
+  const loadReviews = useCallback(() => {
     if (!selectedBusiness?._id) return;
     
     const filters = { page };
@@ -69,7 +62,14 @@ export default function ReviewsPage() {
     if (ratingFilter) filters.rating = ratingFilter;
 
     fetchReviews(selectedBusiness._id, filters);
-  };
+  }, [selectedBusiness, page, linkedReview, statusFilter, ratingFilter, fetchReviews]);
+
+  // This runs whenever business or filters change
+  useEffect(() => {
+    if (selectedBusiness?.googleConnected && selectedBusiness?.reviewsSynced) {
+      if (!linkedReview || linkedReview.businessId === selectedBusiness._id) loadReviews();
+    }
+  }, [selectedBusiness, linkedReview, loadReviews]);
 
   const handleStatusFilter = (value) => {
     clearLink();

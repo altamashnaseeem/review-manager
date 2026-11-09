@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) router.replace(loginDestination(window.location.search));
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -79,7 +79,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="text-blue-600 font-medium hover:underline">Create one free</Link>
           </p>
         </div>

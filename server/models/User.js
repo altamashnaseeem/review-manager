@@ -41,6 +41,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    pendingPlan: { type: String, enum: ['monthly', 'quarterly', 'semi-annual'] },
+    subscriptionStatus: { type: String, default: null },
+    subscriptionEndsAt: { type: Date, default: null },
+    billingLockToken: { type: String, select: false },
+    billingLockUntil: { type: Date, select: false },
     razorpayCustomerId: {
       type: String,
       default: null,

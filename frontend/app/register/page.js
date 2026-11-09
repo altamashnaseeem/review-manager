@@ -15,7 +15,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (isAuthenticated) router.replace('/connect-google');
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

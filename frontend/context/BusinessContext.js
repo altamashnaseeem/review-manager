@@ -116,9 +116,9 @@ export const BusinessProvider = ({ children }) => {
     }
   };
 
-  const selectBusiness = (business) => {
+  const selectBusiness = useCallback((business) => {
     dispatch({ type: 'SELECT_BUSINESS', payload: business });
-  };
+  }, []);
 
   return (
     <BusinessContext.Provider value={{ ...state, fetchBusinesses, addBusiness, updateBusiness, deleteBusiness, selectBusiness }}>

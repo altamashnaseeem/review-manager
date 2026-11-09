@@ -76,7 +76,7 @@ export default function ReviewCard({ review }) {
       {/* Review text */}
       {review.comment && (
         <p className="text-sm text-gray-700 mb-4 leading-relaxed bg-gray-50 rounded-lg px-3 py-2.5">
-          "{review.comment}"
+          &quot;{review.comment}&quot;
         </p>
       )}
 

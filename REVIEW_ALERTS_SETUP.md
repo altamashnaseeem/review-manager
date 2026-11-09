@@ -14,6 +14,10 @@ the owner selects another value.
 | 4 | 1, 2, 3, 4 |
 | 5 | 1, 2, 3, 4, 5 |
 
+Expired trials and expired/unverified subscriptions are blocked from review APIs
+and skipped by background review/alert jobs. See [DEPLOYMENT.md](DEPLOYMENT.md)
+for always-on hosting and production billing configuration.
+
 The workflow is:
 
 1. The background poller discovers a new Google review.
@@ -46,7 +50,8 @@ network/provider delays. It is not an instant Google push notification.
 
 A separate worker checks pending/failed alerts every minute, even if no new
 review is found. Failed submissions use 1-, 2-, 4-, and 8-minute backoff between
-attempts, up to five total attempts. The owner can retry an exhausted failed
+attempts, up to five total attempts. The minute-based worker can add up to another
+minute before an eligible retry is picked up. The owner can retry an exhausted failed
 alert from the review card. Existing historical reviews are not automatically
 backfilled into this queue, and raising a threshold does not notify for old
 reviews that were already skipped.

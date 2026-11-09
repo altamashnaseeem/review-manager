@@ -1,35 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext'; 
 import { motion } from 'framer-motion';
 import { Star, Zap, Check, ArrowRight, MessageSquare, AlertTriangle, BarChart3, Menu, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { openCheckout } from '../lib/checkout';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const { isAuthenticated, loading, user, logout } = useAuth();
+  const { isAuthenticated, loading, user, logout, refreshUser } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(null); 
-  const [showExpiryModal, setShowExpiryModal] = useState(false); // Controlled structural overlay state
+  const showExpiryModal = !loading && isAuthenticated && user?.hasReviewAccess === false;
   const [selectedModalPlan, setSelectedModalPlan] = useState('monthly'); // Track chosen option inside modal
   const router = useRouter();
   
-  // Track system temporal limits across authenticated account updates
-  useEffect(() => {
-    if (!loading && isAuthenticated && user) {
-      const now = new Date();
-      const trialExpired = user.trialEndsAt && new Date(user.trialEndsAt) < now;
-      
-      // Trigger modal overlay if user has no premium active tier and trial window is past
-      if (user.plan === 'none' && trialExpired) {
-        setShowExpiryModal(true);
-      }
-      console.log("user", user)
-      console.log("showexpirymodal", showExpiryModal)
-    }
-  }, [user, loading, isAuthenticated]);
-
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -43,65 +29,16 @@ export default function Home() {
     }
   };
 
-  const handleCheckout = async (planKey) => {
-    if (!isAuthenticated || !user?.id) {
-      router.push('/register');
-      return;
-    }
-  
+  const handleCheckout = async plan => {
+    if (!isAuthenticated) { router.push('/register'); return; }
+    setPaymentLoading(plan);
     try {
-      setPaymentLoading(planKey);
-      
-      const res = await fetch('http://localhost:5000/api/checkout/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planKey, userId: user.id }),
-      });
-       
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to initialize session');
-      }
-
-      if (!window.Razorpay) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          script.onload = resolve;
-          script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
-          document.body.appendChild(script);
-        });
-      }
-
-      const options = {
-        key: data.razorpayKeyId,
-        subscription_id: data.subscriptionId,
-        name: 'RepliQ',
-        description: `${planKey.toUpperCase()} Subscription Plan`,
-        handler: function (response) {
-          console.log('Payment Verification Success Data:', response);
-          setShowExpiryModal(false); // Clear structural overlay state block
-          router.push('/dashboard?payment=success');
-        },
-        prefill: {
-          name: user.name || data.name || '',
-          email: user.email || data.email || '',
-          contact: data.phone || '',
-        },
-        theme: {
-          color: '#2563eb',
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-
-    } catch (err) {
-      console.error('Checkout error:', err);
-      alert(err.message || 'An error occurred during payment setup.');
-    } finally {
-      setPaymentLoading(null);
-    }
+      if (!user?.billingEnabled) throw new Error('Subscriptions are currently unavailable. Please try again later.');
+      await openCheckout(plan);
+      await refreshUser();
+      router.push('/dashboard');
+    } catch (error) { alert(error.response?.data?.message || error.message || 'Could not start checkout.'); }
+    finally { setPaymentLoading(null); }
   };
 
   if (loading) {
@@ -328,7 +265,7 @@ export default function Home() {
               Choose the plan that fits your business
             </h2>
             <p className="text-slate-500 mt-4">
-              All plans include a 7-day free trial. Cancel or change your subscription timeline at any time.
+              Start with a 7-day free trial. Review the subscription terms in checkout.
             </p>
           </div>
 
