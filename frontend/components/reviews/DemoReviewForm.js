@@ -25,7 +25,7 @@ export default function DemoReviewForm({ onCreated }) {
     } catch (error) { toast.error(error.response?.data?.message || 'Could not simulate review'); }
     finally { setBusy(false); }
   };
-  return <form onSubmit={submit} className="card p-5 mb-5 space-y-3">
+  return <form onSubmit={submit} className="card min-w-0 p-4 sm:p-5 mb-5 space-y-3">
     <h2 className="font-semibold">Test a new customer review</h2>
     <p className="text-sm text-gray-600">Your alert threshold is {selectedBusiness.alertOnRating} stars or below. Reviews and AI drafts are synthetic. WhatsApp alerts stay simulated unless you select the real test option below.</p>
     <label className="block text-sm">Customer rating

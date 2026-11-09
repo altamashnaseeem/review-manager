@@ -38,9 +38,9 @@ export default function AppLayout({ children }) {
   if (!ready) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-dvh bg-gray-50 lg:flex">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="w-full min-w-0 flex-1 [overflow-wrap:anywhere]">
         {selectedBusiness.isDemo && <div role="status" className="p-3 bg-amber-100 text-amber-900 text-sm">Development demo: synthetic reviews. Replies are saved locally; nothing is posted to Google.</div>}
         {children}
       </main>

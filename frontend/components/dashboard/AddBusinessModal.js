@@ -60,14 +60,15 @@ export default function AddBusinessModal({ isOpen, onClose }) {
           <input
             type="range" min="1" max="5" value={form.alertOnRating}
             onChange={(e) => setForm({ ...form, alertOnRating: Number(e.target.value) })}
-            className="w-full accent-blue-600"
+            aria-label="Alert rating threshold"
+            className="w-full h-8 accent-blue-600"
           />
           <div className="flex justify-between text-xs text-gray-400 mt-1">
-            <span>1 ⭐</span><span>2 ⭐⭐</span><span>3 ⭐⭐⭐</span><span>4 ⭐⭐⭐⭐</span><span>5 ⭐⭐⭐⭐⭐</span>
+            <span>1 ★</span><span>2 ★</span><span>3 ★</span><span>4 ★</span><span>5 ★</span>
           </div>
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
           <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
           <button type="submit" disabled={loading} className="btn-primary flex-1 justify-center">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Adding...</> : <><Building2 size={14} /> Continue to Google</>}

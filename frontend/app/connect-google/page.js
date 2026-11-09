@@ -99,21 +99,21 @@ export default function ConnectGooglePage() {
   if (loading || !loaded) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" aria-label="Loading" /></div>;
   if (!isAuthenticated) return null;
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="card p-8 w-full max-w-xl space-y-5">
+    <main className="min-h-dvh bg-gray-50 flex items-center justify-center px-4 py-8 sm:p-6">
+      <div className="card min-w-0 p-5 sm:p-8 w-full max-w-xl [overflow-wrap:anywhere] space-y-5">
         <Building2 className="text-blue-600" size={32} />
         <p className="text-sm text-gray-500">Welcome, {user?.name} · Business setup</p>
-        <h1 className="text-2xl font-bold">Connect your Google Business Profile</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Connect your Google Business Profile</h1>
         <p className="text-gray-600 text-sm">Add your business details, grant Google permission, then choose the location you manage. Your dashboard opens after the reviews sync.</p>
         {(error || businessError) && <p role="alert" className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error || businessError}</p>}
-        {businessError && <button className="btn-secondary" onClick={fetchBusinesses}>Retry loading businesses</button>}
+        {businessError && <button className="btn-secondary w-full sm:w-auto" onClick={fetchBusinesses}>Retry loading businesses</button>}
         {businesses.length > 0 && <div>
           <label htmlFor="business" className="block text-sm font-medium mb-2">Your business</label>
           <select id="business" className="input-field" disabled={busy || !!callback} value={business?._id || ''} onChange={e => { setBusinessId(e.target.value); setError(''); selectBusiness(businesses.find(b => b._id === e.target.value)); }}>
             {businesses.map(b => <option key={b._id} value={b._id}>{b.name}{b.isDemo ? ' (demo)' : ''}</option>)}
           </select>
         </div>}
-        <button className="btn-secondary" disabled={busy || !!callback} onClick={() => setShowAdd(true)}>{business ? 'Add another business' : 'Enter business details'}</button>
+        <button className="btn-secondary w-full sm:w-auto" disabled={busy || !!callback} onClick={() => setShowAdd(true)}>{business ? 'Add another business' : 'Enter business details'}</button>
         {business && <div className="space-y-4 border-t pt-5">
           {business.isDemo ? <p className="text-sm text-amber-800">Development demo: 125 synthetic reviews. No real Google connection or Google posts.</p> : <button className="btn-primary w-full justify-center" disabled={busy || !!callback} onClick={connect}>{business.googleAuthorized ? 'Reconnect Google Business account' : 'Connect Google Business account'}</button>}
           {busy && <p role="status" className="text-sm text-gray-500 flex gap-2"><Loader2 size={16} className="animate-spin" /> Connecting or syncing reviews…</p>}
@@ -124,15 +124,15 @@ export default function ConnectGooglePage() {
               <option value="">Select a location</option>
               {locations.map(l => <option key={`${l.accountId}/${l.locationId}`} value={`${l.accountId}/${l.locationId}`}>{l.title} · {l.address || l.accountName}</option>)}
             </select>
-            <button className="btn-primary" disabled={busy || !locationKey} onClick={selectLocation}>Sync reviews and open dashboard</button>
+            <button className="btn-primary w-full sm:w-auto" disabled={busy || !locationKey} onClick={selectLocation}>Sync reviews and open dashboard</button>
           </div>}
-          {business.googleConnected && <button className="btn-primary" disabled={busy || !!callback} onClick={sync}>{business.reviewsSynced ? 'Sync and continue to dashboard' : 'Retry review sync'}</button>}
+          {business.googleConnected && <button className="btn-primary w-full sm:w-auto" disabled={busy || !!callback} onClick={sync}>{business.reviewsSynced ? 'Sync and continue to dashboard' : 'Retry review sync'}</button>}
           {demoEnabled && !business.googleAuthorized && !business.googleLocationId && <div className="bg-amber-50 p-4 rounded-lg space-y-2">
             <p className="text-sm text-amber-900">Developer testing without a store: load 125 synthetic reviews. Replies stay local and no alerts are sent.</p>
-            <button className="btn-secondary" disabled={busy || !!callback} onClick={demo}>Use development demo</button>
+            <button className="btn-secondary w-full sm:w-auto" disabled={busy || !!callback} onClick={demo}>Use development demo</button>
           </div>}
         </div>}
-        <div className="flex justify-between text-sm text-gray-500 pt-3"><Link href="/">Home</Link><button onClick={logout}>Sign out</button></div>
+        <div className="flex justify-between text-sm text-gray-500 pt-3"><Link href="/" className="inline-flex min-h-11 items-center">Home</Link><button onClick={logout}>Sign out</button></div>
       </div>
       <AddBusinessModal isOpen={showAdd} onClose={() => { setShowAdd(false); setBusinessId(''); }} />
     </main>

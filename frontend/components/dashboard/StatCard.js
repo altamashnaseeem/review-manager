@@ -9,7 +9,7 @@ export default function StatCard({ title, value, subtitle, icon: Icon, color = '
   const c = colors[color];
 
   return (
-    <div className="card p-5">
+    <div className="card min-w-0 p-4 sm:p-5">
       <div className="flex items-start justify-between mb-4">
         <div className={`w-10 h-10 ${c.bg} rounded-xl flex items-center justify-center`}>
           <Icon size={20} className={c.icon} />
@@ -20,7 +20,7 @@ export default function StatCard({ title, value, subtitle, icon: Icon, color = '
           </span>
         )}
       </div>
-      <div className={`text-3xl font-bold ${c.value} mb-1`}>{value}</div>
+      <div className={`text-2xl sm:text-3xl font-bold ${c.value} mb-1`}>{value}</div>
       <div className="text-sm font-medium text-gray-700">{title}</div>
       {subtitle && <div className="text-xs text-gray-400 mt-0.5">{subtitle}</div>}
     </div>

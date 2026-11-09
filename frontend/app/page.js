@@ -60,7 +60,7 @@ export default function Home() {
       
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-blue-600 p-2 rounded-xl text-white">
               <Star size={20} fill="currentColor" />
@@ -100,16 +100,16 @@ export default function Home() {
             )}
           </div>
 
-          <button className="md:hidden text-slate-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <button aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={isMenuOpen} aria-controls="home-mobile-menu" className="md:hidden h-11 w-11 flex items-center justify-center text-slate-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-slate-200 p-6 flex flex-col gap-4 shadow-xl">
-            <a href="#features" onClick={() => setIsMenuOpen(false)} className="text-slate-600 font-medium">Features</a>
-            <a href="#pricing" onClick={() => setIsMenuOpen(false)} className="text-slate-600 font-medium">Pricing</a>
+          <div id="home-mobile-menu" className="md:hidden absolute top-16 left-0 right-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain bg-white border-b border-slate-200 p-4 sm:p-6 flex flex-col gap-3 shadow-xl">
+            <a href="#features" onClick={() => setIsMenuOpen(false)} className="flex min-h-11 items-center text-slate-600 font-medium">Features</a>
+            <a href="#pricing" onClick={() => setIsMenuOpen(false)} className="flex min-h-11 items-center text-slate-600 font-medium">Pricing</a>
             <hr className="border-slate-100" />
             {isAuthenticated ? (
               <div className="flex flex-col gap-3">

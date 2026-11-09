@@ -62,19 +62,20 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-3xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-3xl mx-auto">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-500 text-sm mt-0.5">Manage your account and business preferences</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
+        <div className="grid grid-cols-3 sm:flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-full sm:w-fit">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              aria-pressed={activeTab === id}
+              className={`flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${activeTab === id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Icon size={15} /> {label}
             </button>
@@ -83,15 +84,15 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <h2 className="font-semibold text-gray-900 mb-5">Your profile</h2>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center">
+              <div className="w-14 h-14 shrink-0 bg-blue-600 rounded-2xl flex items-center justify-center">
                 <span className="text-white text-xl font-bold">{user?.name?.charAt(0).toUpperCase()}</span>
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{user?.name}</p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
+                <p className="break-all text-sm text-gray-500">{user?.email}</p>
                 <span className={`mt-1 inline-block text-xs px-2 py-0.5 rounded-full font-medium ${user?.plan === 'trial' ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'}`}>
                   {user?.plan === 'trial' ? `Trial — ends ${new Date(user?.trialEndsAt).toLocaleDateString('en-IN')}` : user?.plan + ' plan'}
                 </span>
@@ -116,7 +117,7 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
 
         {/* Business Settings Tab */}
         {activeTab === 'business' && (
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <h2 className="font-semibold text-gray-900 mb-5">
               {selectedBusiness ? `Settings for ${selectedBusiness.name}` : 'No business selected'}
             </h2>
@@ -151,17 +152,17 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
                   />
                 </div>
                 <p className="text-sm text-gray-600 p-4 bg-gray-50 rounded-xl">New reviews at or below your threshold trigger a WhatsApp alert and an AI draft. You approve the reply before it is posted to Google.</p>
-                <div className="flex gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button type="submit" disabled={loading} className="btn-primary">
                     {loading ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : <><Save size={14} /> Save changes</>}
                   </button>
-                  <button type="button" onClick={handleDeleteBusiness} className="btn-danger ml-auto">
+                  <button type="button" onClick={handleDeleteBusiness} className="btn-danger sm:ml-auto">
                     <Trash2 size={14} /> Remove Business
                   </button>
                 </div>
                 <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-  <div className="flex items-center justify-between">
-    <div>
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="min-w-0">
       <p className="text-sm font-medium text-gray-900">Google Business Account</p>
       <p className="text-xs text-gray-500 mt-0.5">
         {selectedBusiness?.googleConnected
@@ -173,7 +174,7 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
       type="button"
       onClick={handleConnectGoogle}
       disabled={connecting}
-      className={`btn-primary text-sm ${selectedBusiness?.googleConnected ? 'bg-green-600 hover:bg-green-700' : ''}`}
+      className={`btn-primary sm:shrink-0 text-sm ${selectedBusiness?.googleConnected ? 'bg-green-600 hover:bg-green-700' : ''}`}
     >
       {connecting
         ? 'Redirecting...'
@@ -190,7 +191,7 @@ const handleConnectGoogle = () => router.push(`/connect-google?business=${select
 
         {/* Security Tab */}
         {activeTab === 'security' && (
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <h2 className="font-semibold text-gray-900 mb-5">Change password</h2>
             <form onSubmit={handlePasswordUpdate} className="space-y-4">
               <div>

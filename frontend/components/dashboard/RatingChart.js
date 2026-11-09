@@ -11,7 +11,7 @@ export default function RatingChart({ ratingBreakdown = [] }) {
   }));
 
   return (
-    <div className="card p-5">
+    <div className="card min-w-0 p-4 sm:p-5">
       <h3 className="text-sm font-semibold text-gray-900 mb-4">Rating breakdown</h3>
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={data} barSize={32}>

@@ -85,10 +85,10 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       {/* Blurs and disables dashboard interactions seamlessly behind the modal overlay */}
-      <div className={`p-6 max-w-6xl mx-auto transition-all duration-300 ${showExpiryModal ? 'blur-sm pointer-events-none select-none' : ''}`}>
+      <div className={`p-4 sm:p-6 max-w-6xl mx-auto transition-all duration-300 ${showExpiryModal ? 'blur-sm pointer-events-none select-none' : ''}`}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div className="min-w-0">
             <Link 
               href="/" 
               className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 mb-2 transition-colors"
@@ -103,7 +103,7 @@ export default function DashboardPage() {
               {selectedBusiness ? `Showing stats for ${selectedBusiness.name}` : 'Add your first business to get started'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:shrink-0 [&>button]:flex-1 sm:[&>button]:flex-none">
             {selectedBusiness && (
               <button onClick={syncReviews} disabled={syncing} className="btn-secondary">
                 <RefreshCw size={15} className={syncing ? "animate-spin" : ""} /> {syncing ? "Syncing…" : "Sync Reviews"}
@@ -151,7 +151,7 @@ export default function DashboardPage() {
                 )}
 
                 {/* Stat cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6">
                   <StatCard title="Overall Rating" value={stats?.overallRating?.toFixed(1) || '—'} subtitle="Google rating" icon={Star} color="yellow" />
                   <StatCard title="Total Reviews" value={stats?.totalReviews || 0} subtitle="All time" icon={MessageSquare} color="blue" />
                   <StatCard title="Pending Replies" value={stats?.pendingReplies || 0} subtitle="Need your attention" icon={AlertCircle} color="red" />
@@ -159,25 +159,25 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Chart + Summary */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                   <RatingChart ratingBreakdown={stats?.ratingBreakdown || []} />
 
-                  <div className="card p-5">
+                  <div className="card min-w-0 p-4 sm:p-5">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">Quick summary</h3>
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between py-2.5 border-b border-gray-50">
+                      <div className="flex items-start justify-between gap-3 py-2.5 border-b border-gray-50">
                         <span className="text-sm text-gray-600">Reviews last 30 days</span>
                         <span className="text-sm font-semibold text-gray-900">{stats?.recentReviews || 0}</span>
                       </div>
-                      <div className="flex items-center justify-between py-2.5 border-b border-gray-50">
+                      <div className="flex items-start justify-between gap-3 py-2.5 border-b border-gray-50">
                         <span className="text-sm text-gray-600">Alert threshold</span>
                         <span className="text-sm font-semibold text-gray-900">{selectedBusiness?.alertOnRating}★ and below</span>
                       </div>
-                      <div className="flex items-center justify-between py-2.5 border-b border-gray-50">
+                      <div className="flex items-start justify-between gap-3 py-2.5 border-b border-gray-50">
                         <span className="text-sm text-gray-600">Alert number</span>
-                        <span className="text-sm font-semibold text-gray-900">{selectedBusiness?.alertPhone}</span>
+                        <span className="min-w-0 break-all text-right text-sm font-semibold text-gray-900">{selectedBusiness?.alertPhone}</span>
                       </div>
-                      <div className="flex items-center justify-between py-2.5">
+                      <div className="flex items-start justify-between gap-3 py-2.5">
                         <span className="text-sm text-gray-600">Last checked</span>
                         <span className="text-sm font-semibold text-gray-900">
                           {selectedBusiness?.lastPolledAt
@@ -200,14 +200,14 @@ export default function DashboardPage() {
       {/* 3. YOUR DESIGNED SUBSCRIPTION OVERLAY INTEGRATED HERE */}
       {showExpiryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-8 max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl border border-slate-100 text-center relative">
+          <div role="dialog" aria-modal="true" aria-labelledby="subscription-title" className="bg-white rounded-3xl p-5 sm:p-8 max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain shadow-2xl border border-slate-100 text-center relative">
             <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 to-amber-500" />
             
             <div className="mx-auto w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4 mt-2">
               <AlertTriangle size={28} />
             </div>
 
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h2 id="subscription-title" className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               Access Suspended
             </h2>
             

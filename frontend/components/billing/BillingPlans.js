@@ -27,7 +27,7 @@ export default function BillingPlans({ layout = 'cards', busy = false, onCheckou
   const caption = plan => `Billed ${formatPrice(plan.amount, plan.currency)} ${plan.months === 1 ? 'every month' : `every ${plan.months} months`}`;
   return <div className="space-y-4">
     <div className={layout === 'cards' ? 'grid grid-cols-1 md:grid-cols-3 gap-6' : 'flex flex-col gap-3 text-left'}>
-      {plans.map(plan => layout === 'cards' ? <div key={plan.key} data-plan={plan.key} className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col gap-4">
+      {plans.map(plan => layout === 'cards' ? <div key={plan.key} data-plan={plan.key} className="min-w-0 bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-sm flex flex-col gap-4">
         <h3 className="text-lg font-bold text-slate-900">{names[plan.key]}</h3>
         <p className="text-3xl font-extrabold text-slate-900">{formatPrice(plan.amount, plan.currency)}</p>
         <p className="text-sm text-slate-600">{caption(plan)}</p>

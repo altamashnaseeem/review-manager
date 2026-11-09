@@ -87,7 +87,7 @@ export default function ReviewsPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -124,11 +124,12 @@ export default function ReviewsPage() {
             {/* Filters */}
             <div className="flex flex-wrap gap-3 mb-5">
               {/* Status filter buttons */}
-              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+              <div role="group" aria-label="Review status" className="grid w-full grid-cols-2 sm:flex sm:w-auto items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
                 {FILTERS.map((f) => (
                   <button
                     key={f.value}
                     onClick={() => handleStatusFilter(f.value)}
+                    aria-pressed={statusFilter === f.value}
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                       statusFilter === f.value
                         ? 'bg-blue-600 text-white'
@@ -142,9 +143,10 @@ export default function ReviewsPage() {
 
               {/* Rating dropdown */}
               <select
+                aria-label="Filter by rating"
                 value={ratingFilter}
                 onChange={handleRatingFilter}
-                className="input-field w-auto text-sm"
+                className="input-field w-full sm:w-auto text-sm"
               >
                 {RATINGS.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -156,7 +158,7 @@ export default function ReviewsPage() {
 
             {/* Active filter indicator */}
             {(statusFilter || ratingFilter) && (
-              <div className="mb-4 flex items-center gap-2">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
                 <span className="text-xs text-gray-500">Active filter:</span>
                 {statusFilter && (
                   <span className="badge-blue text-xs">
@@ -201,10 +203,10 @@ export default function ReviewsPage() {
                 ))}
               </div>
             )}
-            {pages > 1 && <nav aria-label="Review pagination" className="mt-6 flex items-center justify-between">
-              <button className="btn-secondary" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>Previous page</button>
-              <span className="text-sm text-gray-500">Page {page} of {pages}</span>
-              <button className="btn-secondary" disabled={loading || page >= pages} onClick={() => setPage(p => p + 1)}>Next page</button>
+            {pages > 1 && <nav aria-label="Review pagination" className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-between">
+              <button className="btn-secondary text-sm" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>Previous page</button>
+              <span className="col-span-2 row-start-1 text-center text-sm text-gray-500">Page {page} of {pages}</span>
+              <button className="btn-secondary text-sm" disabled={loading || page >= pages} onClick={() => setPage(p => p + 1)}>Next page</button>
             </nav>}
           </>
         )}

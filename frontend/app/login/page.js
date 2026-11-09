@@ -26,7 +26,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -38,7 +38,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 border border-gray-100 p-5 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
@@ -66,7 +66,8 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>

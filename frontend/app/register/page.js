@@ -37,7 +37,7 @@ export default function RegisterPage() {
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-200">
@@ -47,7 +47,7 @@ export default function RegisterPage() {
           <p className="text-gray-500 mt-1 text-sm">7 days free — no credit card needed</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 border border-gray-100 p-5 sm:p-8">
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">
               {error}
@@ -78,7 +78,8 @@ export default function RegisterPage() {
                   name="password" type={showPassword ? 'text' : 'password'} required
                   value={form.password} onChange={handleChange} className="input-field pr-10" placeholder="Min 6 characters"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center text-gray-400">
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
